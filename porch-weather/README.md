@@ -33,6 +33,19 @@ rain 20%, cloud 10%) with two overrides:
 
 After dark, cloud cover stops counting toward the score.
 
+## Icons
+
+Every hour shows what the sky is doing — sun, moon, partly cloudy, overcast, fog,
+drizzle, rain, snow, thunderstorm — mapped from the forecast's WMO weather code,
+with day and night variants. The five factor chips carry their own icons
+(thermometer, droplet for humidity, wind, rain, cloud), colored by that factor's
+rating and paired with a ✓ / ~ / ✕ mark so the meaning never rests on color alone.
+
+In the week grid, a block picks up a small marker when there's rain, snow or a
+thunderstorm coming, or when wind or humidity is the specific thing spoiling that
+hour. Merely cloudy hours are left unmarked there — in an overcast week that
+marker would end up on every block and stop meaning anything.
+
 ## Using it
 
 - **Location** — search by city or ZIP, or hit "Use my location". It's remembered
