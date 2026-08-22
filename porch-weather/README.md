@@ -39,8 +39,12 @@ After dark, cloud cover stops counting toward the score.
   in the browser afterward. You can also link straight to a spot:
   `index.html?lat=35.60&lon=-82.55&name=Home`
 - **Right now** — the current hour's verdict, plus the best remaining stretch today.
-- **Three days** of forecast, as tabs. The color strip is all 24 hours at a glance
-  (past hours dimmed, current hour outlined); click a block to jump to that row.
+- **By hour** — seven days of forecast, as tabs. The color strip is all 24 hours at
+  a glance (past hours dimmed, current hour outlined); click a block to jump to
+  that row.
+- **Week** — all seven days as one grid: a row per day, a column per hour, with the
+  count of green hours beside each day and a "best bet this week" callout. Tap any
+  block to drop into that day's hour-by-hour detail.
 - **Settings** — sun preference (some people want sun on the porch, some want
   shade), whether you run hot or cold, °F/°C, and whether to show the overnight
   hours.

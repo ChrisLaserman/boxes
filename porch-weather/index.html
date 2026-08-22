@@ -139,6 +139,39 @@
   .ticks { display: grid; grid-template-columns: repeat(4, 1fr); gap: 2px; margin-top: 5px; }
   .ticks span { font-size: 11px; color: var(--ink-muted); font-variant-numeric: tabular-nums; }
 
+  /* ---------- week grid ---------- */
+  .viewbar { display: flex; justify-content: space-between; align-items: center; gap: 12px; flex-wrap: wrap; margin-bottom: 14px; }
+  .weekscroll { overflow-x: auto; padding-bottom: 4px; }
+  .weekgrid {
+    display: grid;
+    grid-template-columns: 116px repeat(var(--cols), minmax(24px, 1fr));
+    gap: 2px;
+    min-width: 620px;
+  }
+  @media (max-width: 680px) {
+    .weekgrid { grid-template-columns: 92px repeat(var(--cols), minmax(22px, 1fr)); min-width: 520px; }
+    .wk-day { font-size: 12.5px; }
+  }
+  .wk-corner { position: sticky; left: 0; background: var(--surface); z-index: 2; }
+  .wk-hlabel { font-size: 11px; color: var(--ink-muted); text-align: center; font-variant-numeric: tabular-nums; padding-bottom: 2px; }
+  .wk-day {
+    display: flex; flex-direction: column; justify-content: center;
+    padding-right: 10px; font-size: 13px; line-height: 1.25;
+    position: sticky; left: 0; background: var(--surface); z-index: 2;
+  }
+  .wk-day .n { font-weight: 600; }
+  .wk-day .n button { all: unset; cursor: pointer; font: inherit; font-weight: 600; }
+  .wk-day .n button:hover { text-decoration: underline; }
+  .wk-day .c { font-size: 11px; color: var(--ink-muted); }
+  .wk-cell {
+    height: 30px; border: 0; padding: 0; border-radius: 3px; cursor: pointer;
+    background: color-mix(in srgb, var(--c) 78%, var(--surface));
+  }
+  .wk-cell[data-r="none"] { background: color-mix(in srgb, var(--ink-muted) 16%, var(--surface)); cursor: default; }
+  .wk-cell.past { opacity: 0.38; }
+  .wk-cell.now { outline: 2px solid var(--ink); outline-offset: 1px; }
+  .wk-cell:hover { filter: brightness(1.08); }
+
   /* ---------- hour rows ---------- */
   .hours { display: grid; gap: 6px; }
   .hour {
@@ -254,11 +287,28 @@
 
   <!-- forecast -->
   <section class="card hidden" id="dayCard">
-    <div class="tabs" id="dayTabs" role="tablist" aria-label="Forecast day"></div>
-    <div class="strip" id="strip" role="img" aria-label="Hourly porch rating overview"></div>
-    <div class="ticks" id="ticks" aria-hidden="true"></div>
-    <p class="note" id="daySummary" style="margin:12px 0 14px"></p>
-    <div class="hours" id="hours"></div>
+    <div class="viewbar">
+      <div class="seg" role="group" aria-label="View">
+        <button type="button" id="viewDay" aria-pressed="true">By hour</button>
+        <button type="button" id="viewWeek" aria-pressed="false">Week</button>
+      </div>
+      <span class="note" id="weekLead"></span>
+    </div>
+
+    <div id="dayView">
+      <div class="tabs" id="dayTabs" role="tablist" aria-label="Forecast day"></div>
+      <div class="strip" id="strip" role="img" aria-label="Hourly porch rating overview"></div>
+      <div class="ticks" id="ticks" aria-hidden="true"></div>
+      <p class="note" id="daySummary" style="margin:12px 0 14px"></p>
+      <div class="hours" id="hours"></div>
+    </div>
+
+    <div id="weekView" class="hidden">
+      <div class="weekscroll">
+        <div class="weekgrid" id="weekGrid"></div>
+      </div>
+      <p class="note" id="weekSummary" style="margin:14px 0 0"></p>
+    </div>
   </section>
 
   <section class="card hidden" id="errCard"><p class="err" id="errMsg"></p></section>
@@ -331,7 +381,7 @@
   const LS_LOC = "porch.location";
   const LS_PREFS = "porch.prefs";
 
-  const defaults = { units: "F", sun: "any", temp: "neutral", hours: "waking" };
+  const defaults = { units: "F", sun: "any", temp: "neutral", hours: "waking", view: "day" };
   let prefs = Object.assign({}, defaults, load(LS_PREFS));
   let location_ = load(LS_LOC);
   let data = null;          // scored forecast
@@ -492,7 +542,7 @@
       + "?latitude=" + encodeURIComponent(loc.lat)
       + "&longitude=" + encodeURIComponent(loc.lon)
       + "&hourly=" + HOURLY
-      + "&forecast_days=3&timezone=auto"
+      + "&forecast_days=7&timezone=auto"
       + "&temperature_unit=fahrenheit&wind_speed_unit=mph&precipitation_unit=inch";
     const res = await fetch(url);
     if (!res.ok) throw new Error("Weather service returned " + res.status);
@@ -571,11 +621,25 @@
     const hh = h % 12 === 0 ? 12 : h % 12;
     return hh + " " + ampm;
   }
-  function dayName(dateStr, i) {
+  function dayName(dateStr, i, short) {
     if (i === 0) return "Today";
-    if (i === 1) return "Tomorrow";
+    if (i === 1) return short ? "Tomorrow" : "Tomorrow";
     const d = new Date(dateStr + "T12:00:00");
-    return d.toLocaleDateString(undefined, { weekday: "long" });
+    return d.toLocaleDateString(undefined, { weekday: short ? "short" : "long" });
+  }
+
+  // compact column header for the week grid: 6a, 9a, 12p, 3p …
+  function compactHour(h) {
+    if (prefs.units === "C") return String(h).padStart(2, "0");
+    if (h === 0) return "12a";
+    if (h === 12) return "12p";
+    return (h % 12) + (h < 12 ? "a" : "p");
+  }
+
+  function shownHourNumbers() {
+    const out = [];
+    for (let h = 0; h < 24; h++) if (prefs.hours === "all" || (h >= 6 && h <= 23)) out.push(h);
+    return out;
   }
   const SKY = {
     0: "Clear", 1: "Mostly clear", 2: "Partly cloudy", 3: "Overcast",
@@ -638,9 +702,14 @@
     $("locName").textContent = location_ ? location_.name : "Not set";
 
     if (!data) return;
+    $("viewDay").setAttribute("aria-pressed", String(prefs.view === "day"));
+    $("viewWeek").setAttribute("aria-pressed", String(prefs.view === "week"));
+    $("dayView").classList.toggle("hidden", prefs.view !== "day");
+    $("weekView").classList.toggle("hidden", prefs.view !== "week");
     renderNow();
     renderTabs();
     renderDay();
+    renderWeek();
     $("nowCard").classList.remove("hidden");
     $("dayCard").classList.remove("hidden");
     if (fetchedAt) {
@@ -688,7 +757,7 @@
       b.type = "button";
       b.setAttribute("role", "tab");
       b.setAttribute("aria-selected", String(i === activeDay));
-      b.textContent = dayName(d.date, i);
+      b.textContent = dayName(d.date, i, data.days.length > 3);
       b.addEventListener("click", () => { activeDay = i; renderTabs(); renderDay(); });
       tabs.appendChild(b);
     });
@@ -750,6 +819,98 @@
       return;
     }
     shown.forEach(h => wrap.appendChild(hourRow(h)));
+  }
+
+  // green hours left in a day (today counts only the hours still ahead)
+  function greenCount(day, i) {
+    return visibleHours(day, i === 0).filter(h => h.rating === "good").length;
+  }
+
+  function renderWeek() {
+    const grid = $("weekGrid");
+    grid.innerHTML = "";
+    const cols = shownHourNumbers();
+    grid.style.setProperty("--cols", cols.length);
+
+    // header row
+    const corner = document.createElement("div");
+    corner.className = "wk-corner";
+    grid.appendChild(corner);
+    cols.forEach(h => {
+      const el = document.createElement("div");
+      el.className = "wk-hlabel";
+      el.textContent = h % 3 === 0 ? compactHour(h) : "";
+      grid.appendChild(el);
+    });
+
+    // one row per day
+    data.days.forEach((day, i) => {
+      const byHour = {};
+      day.hours.forEach(h => byHour[h.hour] = h);
+      const green = greenCount(day, i);
+
+      const label = document.createElement("div");
+      label.className = "wk-day";
+      const jump = document.createElement("button");
+      jump.type = "button";
+      jump.textContent = dayName(day.date, i, true);
+      jump.title = "See " + dayName(day.date, i, true) + " hour by hour";
+      jump.addEventListener("click", () => {
+        activeDay = i;
+        setPref("view", "day", false);
+      });
+      const n = document.createElement("div"); n.className = "n"; n.appendChild(jump);
+      const c = document.createElement("div"); c.className = "c";
+      c.textContent = green === 0 ? "no green hours" : green + (green === 1 ? " green hour" : " green hours");
+      label.appendChild(n); label.appendChild(c);
+      grid.appendChild(label);
+
+      cols.forEach(hr => {
+        const h = byHour[hr];
+        const cell = document.createElement("button");
+        cell.type = "button";
+        cell.className = "wk-cell";
+        cell.dataset.r = h ? h.rating : "none";
+        if (h) {
+          cell.title = dayName(day.date, i, true) + " " + hourLabel(hr) + " — " + WORD[h.rating]
+            + " · " + temp(h.feels) + ", " + Math.round(h.rh) + "% humidity, " + wind(h.wind)
+            + ", " + Math.round(h.rainProb) + "% rain";
+          cell.setAttribute("aria-label", cell.title);
+          if (h.time === data.nowKey) cell.classList.add("now");
+          else if (h.time < data.nowKey) cell.classList.add("past");
+          cell.addEventListener("click", () => {
+            activeDay = i;
+            setPref("view", "day", false);
+            const row = document.getElementById("hr-" + h.time);
+            if (row) row.scrollIntoView({ behavior: "smooth", block: "center" });
+          });
+        } else {
+          cell.disabled = true;
+          cell.setAttribute("aria-label", "no data");
+        }
+        grid.appendChild(cell);
+      });
+    });
+
+    // best day callout
+    let best = null;
+    data.days.forEach((day, i) => {
+      const bw = bestWindow(day, i === 0);
+      const score = greenCount(day, i) * 10 + (bw && bw.rating === "good" ? bw.run.n : 0);
+      if (bw && bw.rating === "good" && (!best || score > best.score)) best = { i: i, day: day, bw: bw, score: score };
+    });
+    const lead = $("weekLead"), sum = $("weekSummary");
+    if (best) {
+      const when = hourLabel(best.bw.run.start.hour) + " – " + hourLabel((best.bw.run.end.hour + 1) % 24);
+      const name = dayName(best.day.date, best.i, false);
+      lead.textContent = "Pick of the week: " + name;
+      sum.innerHTML = "<strong>Best bet this week:</strong> " + name + ", " + when
+        + " — " + best.bw.run.n + (best.bw.run.n === 1 ? " green hour" : " straight green hours")
+        + ". Tap any block for that day's detail.";
+    } else {
+      lead.textContent = "";
+      sum.innerHTML = "<strong>Nothing green in the next 7 days</strong> — the yellow blocks are your best shot. Tap any block for that day's detail.";
+    }
   }
 
   function hourRow(h) {
@@ -899,6 +1060,8 @@
     if (needsRescore) rescore();
     render();
   }
+  $("viewDay").addEventListener("click", () => setPref("view", "day", false));
+  $("viewWeek").addEventListener("click", () => setPref("view", "week", false));
   $("unitF").addEventListener("click", () => setPref("units", "F", false));
   $("unitC").addEventListener("click", () => setPref("units", "C", false));
   $("prefSun").addEventListener("change", e => setPref("sun", e.target.value, true));
