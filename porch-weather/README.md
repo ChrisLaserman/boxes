@@ -35,18 +35,25 @@ Each hour gets a rating for five factors, plus one overall verdict:
 | Wind | 0–10 mph, gusts under 18 | 10–18 mph, or gusty | over ~20 mph, or gusts over 30 |
 | Rain | under 15% chance | 15–50% | over ~55%, or rain actually falling |
 | Cloud cover | depends on your sun preference | | |
+| Air quality (US AQI) | under ~75 | 75–135 | above ~135 — smoke or smog |
 
 Humidity is scored on **dew point** rather than relative humidity, because that's
 what actually feels sticky — 80% humidity at 55 °F is a crisp morning, 80% at
 78 °F is a swamp. The relative-humidity number is still what's displayed.
 
+Air quality comes from Open-Meteo's air-quality service as the US AQI, fetched
+alongside the forecast. It's the factor that catches the 74°-and-sunny afternoon
+that's actually full of wildfire smoke. If that request fails the chip reads "—"
+and the hour is scored on the other five factors, so a bad air-quality response
+never costs you the forecast.
+
 The overall hour rating is a weighted blend (temp 30%, humidity 20%, wind 20%,
-rain 20%, cloud 10%) with two overrides:
+rain 20%, air 12%, cloud 10%) with two overrides:
 
 - An hour is green only when **every** factor is green. One yellow factor keeps
   the hour at yellow.
-- One genuinely bad factor — thunderstorms, 25 mph wind, 95 °F — makes the whole
-  hour red regardless of how good everything else looks.
+- One genuinely bad factor — thunderstorms, 25 mph wind, 95 °F, air above AQI 160
+  — makes the whole hour red regardless of how good everything else looks.
 
 After dark, cloud cover stops counting toward the score.
 
@@ -62,6 +69,13 @@ In the week grid, a block picks up a small marker when there's rain, snow or a
 thunderstorm coming, or when wind or humidity is the specific thing spoiling that
 hour. Merely cloudy hours are left unmarked there — in an overcast week that
 marker would end up on every block and stop meaning anything.
+
+## The masthead
+
+The header carries a sky wash, a hill silhouette and a sun or moon that follow the
+current hour: daylight blue, a warm band in the hour either side of sunrise and
+sunset, and a deep blue night with the moon and a few stars. It's decoration, but
+it's honest decoration — it always matches the hour the dashboard is showing.
 
 ## Using it
 

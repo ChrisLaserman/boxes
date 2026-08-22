@@ -67,10 +67,45 @@
     margin-bottom: 16px;
   }
 
-  /* ---------- header ---------- */
-  header.bar { display: flex; flex-wrap: wrap; gap: 10px 14px; align-items: center; justify-content: space-between; margin-bottom: 16px; }
-  .brand { display: flex; align-items: baseline; gap: 10px; }
+  /* ---------- masthead ---------- */
+  .masthead {
+    position: relative;
+    overflow: hidden;
+    padding: 24px 20px 72px;
+    background: linear-gradient(158deg, color-mix(in srgb, var(--sky) 26%, var(--surface)) 0%, var(--surface) 72%);
+    --sky: #6fb7ef;
+    --orb: #e0a133;
+  }
+  .masthead[data-sky="dusk"]  { --sky: #ef9a5c; --orb: #e2743c; }
+  .masthead[data-sky="night"] { --sky: #3d4f8a; --orb: #d5ddef; }
+  .mast-inner { position: relative; z-index: 2; display: flex; flex-wrap: wrap; gap: 12px 16px; align-items: flex-start; justify-content: space-between; }
+  .brand { display: flex; flex-direction: column; gap: 2px; }
   .brand .sub { color: var(--ink-muted); font-size: 13px; }
+  h1 {
+    font-size: clamp(28px, 5vw, 40px);
+    line-height: 1.05;
+    margin: 0;
+    letter-spacing: -0.025em;
+    font-weight: 700;
+  }
+
+  .masthead .orb {
+    position: absolute; right: 44px; bottom: 26px; z-index: 0;
+    width: 62px; height: 62px;
+    fill: var(--orb); stroke: var(--orb);
+    opacity: 0.55;
+  }
+  .masthead .orb .hidden-orb { display: none; }
+
+  .hills { position: absolute; left: 0; right: 0; bottom: -1px; width: 100%; height: 56px; z-index: 1; display: block; }
+  .hills .far  { fill: var(--ink); opacity: 0.10; }
+  .hills .near { fill: var(--ink); opacity: 0.17; }
+
+  @media (max-width: 680px) {
+    .masthead { padding: 20px 16px 56px; }
+    .masthead .orb { width: 46px; height: 46px; right: 16px; bottom: 18px; }
+    .hills { height: 44px; }
+  }
   .controls { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
 
   button, select, input {
@@ -204,9 +239,9 @@
     white-space: nowrap;
   }
   .pill .mark { font-size: 13px; }
-  .chips { display: flex; flex-wrap: wrap; gap: 5px; }
+  .chips { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 5px; }
   .chip {
-    display: inline-flex; align-items: center; gap: 5px;
+    display: flex; align-items: center; gap: 5px; min-width: 0;
     padding: 3px 8px; border-radius: 8px;
     border: 1px solid var(--ring);
     background: var(--surface);
@@ -215,13 +250,15 @@
   }
   .chip .ic { flex: none; color: var(--c); }
   .chip[data-r="none"] .ic { color: var(--ink-muted); }
-  .chip .v { color: var(--ink); font-weight: 600; font-variant-numeric: tabular-nums; }
+  .chip .k { white-space: nowrap; }
+  .chip .v { color: var(--ink); font-weight: 600; font-variant-numeric: tabular-nums; margin-left: auto; }
+  .chip .sym { margin-left: 1px; }
   .chip .sym { color: var(--ci); font-weight: 700; font-size: 11px; }
 
   @media (max-width: 680px) {
     .hour { grid-template-columns: 66px 24px 1fr; gap: 10px; }
     .hour .pill { justify-self: start; }
-    .hour .chips { grid-column: 1 / -1; }
+    .hour .chips { grid-column: 1 / -1; grid-template-columns: repeat(2, minmax(0, 1fr)); }
   }
 
   /* ---------- settings ---------- */
@@ -245,17 +282,35 @@
 <body>
 <div class="wrap">
 
-  <header class="bar">
-    <div class="brand">
-      <h1>Boyle Porch Weather</h1>
-      <span class="sub" id="updated"></span>
-    </div>
+  <header class="card masthead" id="masthead" data-sky="day">
+    <svg class="orb" viewBox="0 0 64 64" aria-hidden="true" focusable="false">
+      <g id="orbSun">
+        <circle cx="32" cy="32" r="13"/>
+        <g stroke-width="3.4" stroke-linecap="round">
+          <path d="M32 6.5v6M32 51.5v6M6.5 32h6M51.5 32h6M14 14l4.2 4.2M45.8 45.8L50 50M50 14l-4.2 4.2M18.2 45.8L14 50"/>
+        </g>
+      </g>
+      <g id="orbMoon" class="hidden-orb">
+        <path d="M46 38.5A17.5 17.5 0 0 1 25.5 18a17.6 17.6 0 1 0 20.5 20.5z"/>
+        <circle cx="52" cy="14" r="1.8"/><circle cx="14" cy="12" r="1.4"/><circle cx="9" cy="26" r="1.1"/>
+      </g>
+    </svg>
+    <svg class="hills" viewBox="0 0 1200 90" preserveAspectRatio="none" aria-hidden="true" focusable="false">
+      <path class="far"  d="M0 54c140-26 230 14 352-6s214-44 348-16 236 34 340 6c62-16 118-22 160-26v112H0z"/>
+      <path class="near" d="M0 74c150-20 296 12 452-6s268-30 404-6 244 22 344 4v104H0z"/>
+    </svg>
+    <div class="mast-inner">
+      <div class="brand">
+        <h1>Boyle Porch Weather</h1>
+        <span class="sub" id="updated"></span>
+      </div>
     <div class="controls">
       <div class="seg" role="group" aria-label="Units">
         <button type="button" id="unitF" aria-pressed="true">°F</button>
         <button type="button" id="unitC" aria-pressed="false">°C</button>
       </div>
       <button type="button" id="refresh">Refresh</button>
+    </div>
     </div>
   </header>
 
@@ -291,6 +346,7 @@
         <div class="stat"><div class="label">Humidity</div><div class="value" id="nowHum">–</div></div>
         <div class="stat"><div class="label">Wind</div><div class="value" id="nowWind">–</div></div>
         <div class="stat"><div class="label">Sky</div><div class="value" id="nowSky">–</div></div>
+        <div class="stat"><div class="label">Air</div><div class="value" id="nowAir">–</div></div>
       </div>
     </div>
     <p class="note" id="bestWindow" style="margin:14px 0 0"></p>
@@ -370,10 +426,13 @@
           <tr><td>Wind</td><td>0–10 mph, gusts under 18</td><td>10–18 mph or gusty</td><td>over ~20 mph or gusts over 30</td><td>20%</td></tr>
           <tr><td>Rain</td><td>under 15% chance</td><td>15–50%</td><td>over ~55% or measurable rain</td><td>20%</td></tr>
           <tr><td>Cloud cover</td><td>depends on your sun preference</td><td>–</td><td>–</td><td>10%</td></tr>
+          <tr><td>Air quality (US AQI)</td><td>under ~75</td><td>75–135</td><td>above ~135 — smoke or smog</td><td>12%</td></tr>
         </tbody>
       </table>
-      <p class="note" style="margin-top:14px">Each hour carries an icon for what the sky is doing — sun, moon, cloud, fog, drizzle, rain, snow, thunderstorm — and the five chips are keyed to their factor: thermometer, droplet (humidity), wind, rain, cloud. In the week grid, a block picks up a small marker when rain, snow or a thunderstorm is expected, or when wind or humidity is the thing ruining that hour.</p>
-      <p class="note">An hour is green only when <em>every</em> factor is green — one yellow factor keeps it at yellow, and one red factor does too. Something genuinely bad (a thunderstorm, 25&nbsp;mph wind, 95&nbsp;°F) turns the whole hour red no matter how good everything else looks. Comfort bands shift a few degrees with your temperature setting, and after dark cloud cover stops counting.</p>
+      <p class="note" style="margin-top:14px">Each hour carries an icon for what the sky is doing — sun, moon, cloud, fog, drizzle, rain, snow, thunderstorm — and the five chips are keyed to their factor: thermometer, droplet (humidity), wind, rain, cloud, haze (air quality). In the week grid, a block picks up a small marker when rain, snow or a thunderstorm is expected, or when air quality, wind or humidity is the thing ruining that hour. Air quality
+      comes from Open-Meteo's air-quality service as the US AQI; if that request fails the
+      chip reads "—" and the hour is scored on the other five factors.</p>
+      <p class="note">An hour is green only when <em>every</em> factor is green — one yellow factor keeps it at yellow, and one red factor does too. Something genuinely bad (a thunderstorm, 25&nbsp;mph wind, 95&nbsp;°F, air above AQI&nbsp;160) turns the whole hour red no matter how good everything else looks. Comfort bands shift a few degrees with your temperature setting, and after dark cloud cover stops counting.</p>
     </details>
   </section>
 
@@ -518,8 +577,21 @@
     return { score: clamp(s, 0, 100), note: note };
   }
 
-  const WEIGHTS = { temp: 0.30, humidity: 0.20, wind: 0.20, rain: 0.20, cloud: 0.10 };
-  const FACTOR_LABEL = { temp: "Temp", humidity: "Humidity", wind: "Wind", rain: "Rain", cloud: "Sky" };
+  // US AQI: 50 is the top of "good", 100 the top of "moderate". Sitting still
+  // outdoors for an hour is gentler than exercise, so green runs a little past 50.
+  function scoreAir(aqi) {
+    if (aqi == null || isNaN(aqi)) return { score: 100, note: "no air data", neutral: true };
+    const s = clamp(ramp(aqi, [[0, 100], [50, 92], [75, 78], [100, 62], [125, 46], [150, 30], [162, 18], [200, 8], [300, 0]]), 0, 100);
+    const note = aqi < 50 ? "clean air"
+      : aqi < 75 ? "decent air"
+      : aqi < 100 ? "hazy"
+      : aqi < 150 ? "poor air — smoke or smog"
+      : aqi < 200 ? "unhealthy air" : "hazardous air";
+    return { score: s, note: note, aqi: aqi };
+  }
+
+  const WEIGHTS = { temp: 0.30, humidity: 0.20, wind: 0.20, rain: 0.20, cloud: 0.10, air: 0.12 };
+  const FACTOR_LABEL = { temp: "Temp", humidity: "Humidity", wind: "Wind", rain: "Rain", cloud: "Sky", air: "Air" };
 
   function scoreHour(h) {
     const f = {
@@ -527,7 +599,8 @@
       humidity: scoreHumidity(h.dew, h.rh),
       wind: scoreWind(h.wind, h.gust),
       rain: scoreRain(h.rainProb, h.rainAmt, h.code),
-      cloud: scoreCloud(h.cloud, h.isDay)
+      cloud: scoreCloud(h.cloud, h.isDay),
+      air: scoreAir(h.aqi)
     };
 
     let total = 0, weight = 0;
@@ -572,6 +645,24 @@
     return json;
   }
 
+  async function fetchAir(loc) {
+    const url = "https://air-quality-api.open-meteo.com/v1/air-quality"
+      + "?latitude=" + encodeURIComponent(loc.lat)
+      + "&longitude=" + encodeURIComponent(loc.lon)
+      + "&hourly=us_aqi,pm2_5&forecast_days=7&timezone=auto";
+    const res = await fetch(url);
+    if (!res.ok) throw new Error("air quality " + res.status);
+    const json = await res.json();
+    const map = {};
+    if (json.hourly && json.hourly.time) {
+      json.hourly.time.forEach((t, i) => {
+        const v = json.hourly.us_aqi[i];
+        if (v != null) map[t] = { aqi: v, pm25: json.hourly.pm2_5 ? json.hourly.pm2_5[i] : null };
+      });
+    }
+    return map;
+  }
+
   // "YYYY-MM-DDTHH:00" for the current hour in the forecast's own timezone,
   // so "now" is right even when the porch is in another time zone.
   function nowKey(tz) {
@@ -582,8 +673,9 @@
     return p.year + "-" + p.month + "-" + p.day + "T" + hh + ":00";
   }
 
-  function build(json) {
+  function build(json, air) {
     const H = json.hourly;
+    const AQ = air || {};
     const hours = H.time.map((t, i) => {
       const h = {
         time: t,
@@ -600,7 +692,9 @@
         wind: H.wind_speed_10m[i],
         gust: H.wind_gusts_10m[i] == null ? H.wind_speed_10m[i] : H.wind_gusts_10m[i],
         uv: H.uv_index ? H.uv_index[i] : null,
-        isDay: H.is_day[i] === 1
+        isDay: H.is_day[i] === 1,
+        aqi: AQ[t] ? AQ[t].aqi : null,
+        pm25: AQ[t] ? AQ[t].pm25 : null
       };
       Object.assign(h, scoreHour(h));
       return h;
@@ -642,7 +736,10 @@
     storm: '<path d="' + CLOUD + '"/><path d="M13 17.5l-3.1 3.9h2.8l-1 2.3"/>',
     wind: '<path d="M3 8.4h11.3a2.7 2.7 0 1 0-2.7-2.7M3 12.4h14.6a2.7 2.7 0 1 1-2.7 2.7M3 16.4h7.8"/>',
     drop: '<path d="M12 3.4c0 0 5.4 6.1 5.4 9.5a5.4 5.4 0 0 1-10.8 0C6.6 9.5 12 3.4 12 3.4z"/>',
-    thermo: '<path d="M14 14.9V5.3a2 2 0 1 0-4 0v9.6a4 4 0 1 0 4 0z"/><path d="M12 8.6v6.9"/>'
+    thermo: '<path d="M14 14.9V5.3a2 2 0 1 0-4 0v9.6a4 4 0 1 0 4 0z"/><path d="M12 8.6v6.9"/>',
+    haze: '<path d="M2.6 8.2c1.6-1.7 3.2-1.7 4.8 0s3.2 1.7 4.8 0 3.2-1.7 4.8 0 3.2 1.7 4.4.2"/>'
+        + '<path d="M2.6 12.6c1.6-1.7 3.2-1.7 4.8 0s3.2 1.7 4.8 0 3.2-1.7 4.8 0 3.2 1.7 4.4.2"/>'
+        + '<path d="M2.6 17c1.6-1.7 3.2-1.7 4.8 0s3.2 1.7 4.8 0 3.2-1.7 4.8 0 3.2 1.7 4.4.2"/>'
   };
 
   function icon(name, size) {
@@ -771,6 +868,7 @@
     $("viewWeek").setAttribute("aria-pressed", String(prefs.view === "week"));
     $("dayView").classList.toggle("hidden", prefs.view !== "day");
     $("weekView").classList.toggle("hidden", prefs.view !== "week");
+    renderSky();
     renderNow();
     renderTabs();
     renderDay();
@@ -799,6 +897,24 @@
     });
   }
 
+  // the masthead sky follows the current hour: daylight, near the edges of it, or night
+  function renderSky() {
+    const h = data && data.now;
+    const mast = $("masthead");
+    let state = "day";
+    if (h) {
+      if (!h.isDay) state = "night";
+      else {
+        const i = data.hours.indexOf(h);
+        const edge = [-2, -1, 1, 2].some(d => data.hours[i + d] && !data.hours[i + d].isDay);
+        state = edge ? "dusk" : "day";
+      }
+    }
+    mast.dataset.sky = state;
+    $("orbSun").classList.toggle("hidden-orb", state === "night");
+    $("orbMoon").classList.toggle("hidden-orb", state !== "night");
+  }
+
   function renderNow() {
     const h = data.now;
     const v = $("nowVerdict");
@@ -816,6 +932,8 @@
     $("nowHum").innerHTML = icon("drop", 18) + " " + Math.round(h.rh) + "% · dew " + temp(h.dew, false);
     $("nowWind").innerHTML = icon("wind", 18) + " " + wind(h.wind) + " · gusts " + wind(h.gust);
     $("nowSky").innerHTML = icon(codeIcon(h.code, h.isDay), 18) + " " + skyText(h.code) + " · " + Math.round(h.cloud) + "% cloud";
+    $("nowAir").innerHTML = icon("haze", 18) + " "
+      + (h.aqi == null ? "no data" : "AQI " + Math.round(h.aqi) + " · " + h.factors.air.note);
 
     const day = data.days[0];
     const bw = day ? bestWindow(day, true) : null;
@@ -957,12 +1075,14 @@
           const g = h.code >= 95 ? "storm"
             : (h.code >= 71 && h.code <= 77) || h.code >= 85 ? "snow"
             : h.code >= 61 || h.code >= 80 ? "rain"
+            : h.factors.air.rating === "bad" ? "haze"
             : h.factors.wind.rating === "bad" ? "wind"
             : h.factors.humidity.rating === "bad" ? "drop" : null;
           if (g) cell.innerHTML = icon(g, 14);
           cell.title = dayName(day.date, i, true) + " " + hourLabel(hr) + " — " + WORD[h.rating]
             + " · " + temp(h.feels) + ", " + Math.round(h.rh) + "% humidity, " + wind(h.wind)
-            + ", " + Math.round(h.rainProb) + "% rain · " + skyText(h.code);
+            + ", " + Math.round(h.rainProb) + "% rain"
+            + (h.aqi == null ? "" : ", AQI " + Math.round(h.aqi)) + " · " + skyText(h.code);
           cell.setAttribute("aria-label", cell.title);
           if (h.time === data.nowKey) cell.classList.add("now");
           else if (h.time < data.nowKey) cell.classList.add("past");
@@ -1030,10 +1150,11 @@
     const chips = document.createElement("div");
     chips.className = "chips";
     chips.appendChild(chip(h.factors.temp, "Feels", temp(h.feels), "thermo"));
-    chips.appendChild(chip(h.factors.humidity, "Humidity", Math.round(h.rh) + "%", "drop"));
+    chips.appendChild(chip(h.factors.humidity, "Humid", Math.round(h.rh) + "%", "drop"));
     chips.appendChild(chip(h.factors.wind, "Wind", wind(h.wind), "wind"));
     chips.appendChild(chip(h.factors.rain, "Rain", Math.round(h.rainProb) + "%", h.code >= 95 ? "storm" : "rain"));
     chips.appendChild(chip(h.factors.cloud, "Cloud", Math.round(h.cloud) + "%", "cloud"));
+    chips.appendChild(chip(h.factors.air, "Air", h.aqi == null ? "—" : Math.round(h.aqi), "haze"));
     row.appendChild(chips);
     return row;
   }
@@ -1065,8 +1186,11 @@
     clearError();
     $("updated").innerHTML = '<span class="spinner"></span>';
     try {
-      const json = await fetchForecast(location_);
-      data = build(json);
+      const [json, air] = await Promise.all([
+        fetchForecast(location_),
+        fetchAir(location_).catch(() => null)
+      ]);
+      data = build(json, air);
       fetchedAt = new Date();
       activeDay = Math.min(activeDay, data.days.length - 1);
       render();
