@@ -251,7 +251,8 @@
   .chip .ic { flex: none; color: var(--c); }
   .chip[data-r="none"] .ic { color: var(--ink-muted); }
   .chip .k { white-space: nowrap; }
-  .chip .v { color: var(--ink); font-weight: 600; font-variant-numeric: tabular-nums; margin-left: auto; }
+  .chip .v { color: var(--ink); font-weight: 600; font-variant-numeric: tabular-nums; margin-left: auto; white-space: nowrap; }
+  .chip .mut { color: var(--ink-muted); font-weight: 400; }
   .chip .sym { margin-left: 1px; }
   .chip .sym { color: var(--ci); font-weight: 700; font-size: 11px; }
 
@@ -260,6 +261,18 @@
     .hour .pill { justify-self: start; }
     .hour .chips { grid-column: 1 / -1; grid-template-columns: repeat(2, minmax(0, 1fr)); }
   }
+
+  /* ---------- Lucy ---------- */
+  .lucy { text-align: center; padding: 52px 20px 44px; }
+  .lucy .shout {
+    margin: 0;
+    font-size: clamp(52px, 15vw, 132px);
+    line-height: 0.95;
+    font-weight: 800;
+    letter-spacing: -0.035em;
+  }
+  .lucy .lucy-sub { color: var(--ink-2); font-size: 15.5px; max-width: 44ch; margin: 20px auto 0; }
+  .lucy button { margin-top: 20px; }
 
   /* ---------- settings ---------- */
   details.settings summary { cursor: pointer; font-weight: 600; }
@@ -343,6 +356,7 @@
       </div>
       <div class="stats">
         <div class="stat"><div class="label">Feels like</div><div class="value" id="nowTemp">–</div></div>
+        <div class="stat"><div class="label">Actual temp</div><div class="value" id="nowAirTemp">–</div></div>
         <div class="stat"><div class="label">Humidity</div><div class="value" id="nowHum">–</div></div>
         <div class="stat"><div class="label">Wind</div><div class="value" id="nowWind">–</div></div>
         <div class="stat"><div class="label">Sky</div><div class="value" id="nowSky">–</div></div>
@@ -376,6 +390,13 @@
       </div>
       <p class="note" id="weekSummary" style="margin:14px 0 0"></p>
     </div>
+  </section>
+
+  <section class="card lucy hidden" id="lucyCard">
+    <p class="shout">Go outside!</p>
+    <p class="lucy-sub">Lucy was unimpressed with this application. She notes that you can simply
+      go outside and see what the weather looks like.</p>
+    <button type="button" id="lucyBack">…fine, show me the forecast</button>
   </section>
 
   <section class="card hidden" id="errCard"><p class="err" id="errMsg"></p></section>
@@ -418,6 +439,9 @@
         <span class="item" data-r="bad"><span class="sw"></span>✕ Red — stay in</span>
       </div>
 
+      <p class="note">Each hour shows both readings: the feels-like temperature, which is what the
+      rating is built on, and the actual air temperature beside it. They differ when wind chill or
+      humidity is doing something to the air.</p>
       <table class="rules">
         <thead><tr><th>Factor</th><th>Green</th><th>Yellow</th><th>Red</th><th>Weight</th></tr></thead>
         <tbody>
@@ -458,8 +482,12 @@
     { short: "Essex, CT",      name: "Essex, Connecticut",       lat: 41.3548,  lon: -72.3915  },
     { short: "Alexandria, VA", name: "Alexandria, Virginia",     lat: 38.8048,  lon: -77.0469  },
     { short: "Ketchum, ID",    name: "Ketchum, Idaho",           lat: 43.6805,  lon: -114.3637 },
-    { short: "Hopkinton, NH",  name: "Hopkinton, New Hampshire", lat: 43.1917,  lon: -71.6803  }
+    { short: "Hopkinton, NH",  name: "Hopkinton, New Hampshire", lat: 43.1917,  lon: -71.6803  },
+    { short: "Lucy",           name: "Lucy's method",            lucy: true                    }
   ];
+
+  // Lucy mode is deliberately not remembered: reload and you get the forecast back.
+  let lucyMode = false;
 
   const defaults = { units: "F", sun: "any", temp: "neutral", hours: "waking", view: "day" };
   let prefs = Object.assign({}, defaults, load(LS_PREFS));
@@ -860,8 +888,8 @@
     $("prefSun").value = prefs.sun;
     $("prefTemp").value = prefs.temp;
     $("prefHours").value = prefs.hours;
-    $("locName").textContent = location_ ? location_.name : "Not set";
     renderPresets();
+    applyMode();
 
     if (!data) return;
     $("viewDay").setAttribute("aria-pressed", String(prefs.view === "day"));
@@ -875,6 +903,7 @@
     renderWeek();
     $("nowCard").classList.remove("hidden");
     $("dayCard").classList.remove("hidden");
+    applyMode();
     if (fetchedAt) {
       $("updated").textContent = "updated " + fetchedAt.toLocaleTimeString(undefined, { hour: "numeric", minute: "2-digit" });
     }
@@ -884,6 +913,27 @@
     return a && b && Math.abs(a.lat - b.lat) < 0.02 && Math.abs(a.lon - b.lon) < 0.02;
   }
 
+  function setLucy(on) {
+    lucyMode = on;
+    applyMode();
+    renderPresets();
+  }
+
+  // Lucy's view replaces the forecast entirely — that is the whole point of it.
+  function applyMode() {
+    $("lucyCard").classList.toggle("hidden", !lucyMode);
+    if (lucyMode) {
+      $("nowCard").classList.add("hidden");
+      $("dayCard").classList.add("hidden");
+      $("locPicker").classList.add("hidden");
+    } else if (data) {
+      $("nowCard").classList.remove("hidden");
+      $("dayCard").classList.remove("hidden");
+    }
+    $("locName").textContent = lucyMode ? "Lucy's method"
+      : location_ ? location_.name : "Not set";
+  }
+
   function renderPresets() {
     const wrap = $("presets");
     wrap.innerHTML = "";
@@ -891,8 +941,16 @@
       const b = document.createElement("button");
       b.type = "button";
       b.textContent = pre.short;
-      b.setAttribute("aria-pressed", String(samePlace(location_, pre)));
-      b.addEventListener("click", () => setLocation({ lat: pre.lat, lon: pre.lon, name: pre.name }));
+      if (pre.lucy) {
+        b.setAttribute("aria-pressed", String(lucyMode));
+        b.addEventListener("click", () => setLucy(true));
+      } else {
+        b.setAttribute("aria-pressed", String(!lucyMode && samePlace(location_, pre)));
+        b.addEventListener("click", () => {
+          setLucy(false);
+          setLocation({ lat: pre.lat, lon: pre.lon, name: pre.name });
+        });
+      }
       wrap.appendChild(b);
     });
   }
@@ -928,7 +986,8 @@
     $("nowLabel").textContent = h.rating === "good" ? "Good porch weather"
       : h.rating === "ok" ? "Passable — with a caveat" : "Not porch weather";
     $("nowWhy").textContent = whyLine(h);
-    $("nowTemp").innerHTML = icon("thermo", 18) + " " + temp(h.feels) + " (air " + temp(h.temp, false) + ")";
+    $("nowTemp").innerHTML = icon("thermo", 18) + " " + temp(h.feels);
+    $("nowAirTemp").innerHTML = icon("thermo", 18) + " " + temp(h.temp);
     $("nowHum").innerHTML = icon("drop", 18) + " " + Math.round(h.rh) + "% · dew " + temp(h.dew, false);
     $("nowWind").innerHTML = icon("wind", 18) + " " + wind(h.wind) + " · gusts " + wind(h.gust);
     $("nowSky").innerHTML = icon(codeIcon(h.code, h.isDay), 18) + " " + skyText(h.code) + " · " + Math.round(h.cloud) + "% cloud";
@@ -978,7 +1037,8 @@
       cell.type = "button";
       cell.className = "cell";
       cell.dataset.r = h ? h.rating : "none";
-      cell.title = hourLabel(i) + " — " + (h ? WORD[h.rating] + " · " + temp(h.feels) + ", " + Math.round(h.rh) + "% humidity, " + wind(h.wind) : "no data");
+      cell.title = hourLabel(i) + " — " + (h ? WORD[h.rating] + " · " + temp(h.feels) + " feels ("
+        + temp(h.temp, false) + " actual), " + Math.round(h.rh) + "% humidity, " + wind(h.wind) : "no data");
       cell.setAttribute("aria-label", cell.title);
       if (h && h.time === data.nowKey) cell.classList.add("now");
       else if (h && h.time < data.nowKey) cell.classList.add("past");
@@ -1080,7 +1140,8 @@
             : h.factors.humidity.rating === "bad" ? "drop" : null;
           if (g) cell.innerHTML = icon(g, 14);
           cell.title = dayName(day.date, i, true) + " " + hourLabel(hr) + " — " + WORD[h.rating]
-            + " · " + temp(h.feels) + ", " + Math.round(h.rh) + "% humidity, " + wind(h.wind)
+            + " · " + temp(h.feels) + " feels (" + temp(h.temp, false) + " actual), "
+            + Math.round(h.rh) + "% humidity, " + wind(h.wind)
             + ", " + Math.round(h.rainProb) + "% rain"
             + (h.aqi == null ? "" : ", AQI " + Math.round(h.aqi)) + " · " + skyText(h.code);
           cell.setAttribute("aria-label", cell.title);
@@ -1149,7 +1210,12 @@
 
     const chips = document.createElement("div");
     chips.className = "chips";
-    chips.appendChild(chip(h.factors.temp, "Feels", temp(h.feels), "thermo"));
+    const feelsTxt = temp(h.feels, false), airTxt = temp(h.temp, false);
+    const bothTemps = feelsTxt === airTxt
+      ? temp(h.feels)
+      : feelsTxt + ' <span class="mut">feels</span> · ' + airTxt + ' <span class="mut">air</span>';
+    chips.appendChild(chip(h.factors.temp, "Temp", bothTemps, "thermo",
+      feelsTxt === airTxt ? temp(h.feels) : feelsTxt + " feels, " + airTxt + " actual"));
     chips.appendChild(chip(h.factors.humidity, "Humid", Math.round(h.rh) + "%", "drop"));
     chips.appendChild(chip(h.factors.wind, "Wind", wind(h.wind), "wind"));
     chips.appendChild(chip(h.factors.rain, "Rain", Math.round(h.rainProb) + "%", h.code >= 95 ? "storm" : "rain"));
@@ -1159,11 +1225,11 @@
     return row;
   }
 
-  function chip(factor, label, value, iconName) {
+  function chip(factor, label, value, iconName, plain) {
     const c = document.createElement("span");
     c.className = "chip";
     c.dataset.r = factor.neutral ? "none" : factor.rating;
-    c.title = label + " " + value + " — " + factor.note;
+    c.title = label + " " + (plain || value) + " — " + factor.note;
     c.innerHTML = icon(iconName, 15)
       + '<span class="k">' + label + "</span>"
       + '<span class="v">' + value + "</span>"
@@ -1206,8 +1272,8 @@
   function setLocation(loc) {
     location_ = loc;
     save(LS_LOC, loc);
-    $("locName").textContent = loc.name;
     renderPresets();
+    applyMode();
     $("locPicker").classList.add("hidden");
     $("locResults").innerHTML = "";
     $("locNote").textContent = "";
@@ -1268,9 +1334,11 @@
   --------------------------------------------------------------- */
   $("refresh").addEventListener("click", reload);
   $("changeLoc").addEventListener("click", () => {
+    setLucy(false);
     $("locPicker").classList.toggle("hidden");
     if (!$("locPicker").classList.contains("hidden")) $("locQuery").focus();
   });
+  $("lucyBack").addEventListener("click", () => setLucy(false));
   $("locSearch").addEventListener("click", searchPlaces);
   $("locQuery").addEventListener("keydown", e => { if (e.key === "Enter") { e.preventDefault(); searchPlaces(); } });
   $("locGeo").addEventListener("click", useGeolocation);

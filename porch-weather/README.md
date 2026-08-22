@@ -13,6 +13,13 @@ Four saved locations sit as one-tap buttons on the location card:
 | Alexandria, Virginia | 38.8048, -77.0469 |
 | Ketchum, Idaho | 43.6805, -114.3637 |
 | Hopkinton, New Hampshire | 43.1917, -71.6803 |
+| Lucy | see below |
+
+"Lucy" is not a place. Tapping it replaces the entire forecast with **Go outside!**
+in very large type, on the grounds that Lucy was unimpressed with this application
+and observed that you can simply go outside and see what the weather looks like.
+A button underneath brings the forecast back, and the mode is deliberately not
+remembered — reload and you have a weather dashboard again.
 
 A first visit opens on Essex; after that it remembers whichever porch you last
 looked at. "Somewhere else" still opens the search box and the use-my-location
@@ -36,6 +43,10 @@ Each hour gets a rating for five factors, plus one overall verdict:
 | Rain | under 15% chance | 15–50% | over ~55%, or rain actually falling |
 | Cloud cover | depends on your sun preference | | |
 | Air quality (US AQI) | under ~75 | 75–135 | above ~135 — smoke or smog |
+
+Every hour shows both temperatures: the feels-like reading, which the rating is
+built on, and the actual air temperature next to it. They part company whenever
+wind chill or humidity is doing something to the air.
 
 Humidity is scored on **dew point** rather than relative humidity, because that's
 what actually feels sticky — 80% humidity at 55 °F is a crisp morning, 80% at
