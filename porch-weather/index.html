@@ -1,0 +1,920 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Porch Weather</title>
+<meta name="description" content="Hour-by-hour red/yellow/green rating for whether it's a nice day to sit on the porch.">
+<style>
+  :root {
+    color-scheme: light;
+    --surface:        #fcfcfb;
+    --plane:          #f4f4f1;
+    --ink:            #0b0b0b;
+    --ink-2:          #52514e;
+    --ink-muted:      #898781;
+    --hairline:       #e1e0d9;
+    --ring:           rgba(11,11,11,0.10);
+    --shadow:         0 1px 2px rgba(11,11,11,0.05), 0 8px 24px rgba(11,11,11,0.05);
+    --good:           #0ca30c;
+    --ok:             #fab219;
+    --bad:            #d03b3b;
+    --good-ink:       #006300;
+    --ok-ink:         #8a5a00;
+    --bad-ink:        #a52626;
+    --tint:           22%;
+    --radius:         14px;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:where(:not([data-theme="light"])) {
+      color-scheme: dark;
+      --surface:      #1a1a19;
+      --plane:        #0d0d0d;
+      --ink:          #ffffff;
+      --ink-2:        #c3c2b7;
+      --ink-muted:    #898781;
+      --hairline:     #2c2c2a;
+      --ring:         rgba(255,255,255,0.10);
+      --shadow:       0 1px 2px rgba(0,0,0,0.4), 0 8px 24px rgba(0,0,0,0.35);
+      --good-ink:     #4dc44d;
+      --ok-ink:       #fab219;
+      --bad-ink:      #ef6a6a;
+      --tint:         26%;
+    }
+  }
+
+  * { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; }
+  body {
+    background: var(--plane);
+    color: var(--ink);
+    font: 15px/1.5 system-ui, -apple-system, "Segoe UI", sans-serif;
+    -webkit-font-smoothing: antialiased;
+    padding: 20px 16px 64px;
+  }
+  .wrap { max-width: 980px; margin: 0 auto; }
+  h1 { font-size: 20px; margin: 0; letter-spacing: -0.01em; }
+  h2 { font-size: 14px; margin: 0 0 10px; color: var(--ink-2); font-weight: 600; letter-spacing: 0.02em; text-transform: uppercase; }
+  .sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+
+  .card {
+    background: var(--surface);
+    border: 1px solid var(--ring);
+    border-radius: var(--radius);
+    box-shadow: var(--shadow);
+    padding: 16px;
+    margin-bottom: 16px;
+  }
+
+  /* ---------- header ---------- */
+  header.bar { display: flex; flex-wrap: wrap; gap: 10px 14px; align-items: center; justify-content: space-between; margin-bottom: 16px; }
+  .brand { display: flex; align-items: baseline; gap: 10px; }
+  .brand .sub { color: var(--ink-muted); font-size: 13px; }
+  .controls { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+
+  button, select, input {
+    font: inherit;
+    color: var(--ink);
+    background: var(--surface);
+    border: 1px solid var(--ring);
+    border-radius: 9px;
+    padding: 7px 11px;
+  }
+  button { cursor: pointer; }
+  button:hover { background: color-mix(in srgb, var(--ink) 6%, var(--surface)); }
+  button:focus-visible, input:focus-visible, select:focus-visible { outline: 2px solid #2a78d6; outline-offset: 2px; }
+  button.primary { background: var(--ink); color: var(--surface); border-color: var(--ink); }
+  button.primary:hover { opacity: 0.88; }
+  button.ghost { border-color: transparent; background: transparent; color: var(--ink-2); padding: 6px 8px; }
+  button.ghost:hover { background: color-mix(in srgb, var(--ink) 7%, transparent); }
+
+  .seg { display: inline-flex; border: 1px solid var(--ring); border-radius: 9px; overflow: hidden; }
+  .seg button { border: 0; border-radius: 0; padding: 7px 12px; background: transparent; color: var(--ink-2); }
+  .seg button[aria-pressed="true"] { background: var(--ink); color: var(--surface); }
+
+  /* ---------- location ---------- */
+  .locrow { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+  .locrow input[type="search"] { flex: 1 1 220px; min-width: 0; }
+  .locname { font-weight: 600; }
+  .results { list-style: none; margin: 10px 0 0; padding: 0; display: grid; gap: 6px; }
+  .results li button { width: 100%; text-align: left; }
+  .note { color: var(--ink-muted); font-size: 13px; }
+  .err { color: var(--bad-ink); font-size: 14px; }
+
+  /* ---------- verdict hero ---------- */
+  .hero { display: flex; flex-wrap: wrap; gap: 18px; align-items: center; }
+  .verdict {
+    display: flex; align-items: center; gap: 12px;
+    padding: 12px 16px; border-radius: 12px; border: 1px solid var(--ring);
+    background: color-mix(in srgb, var(--c) var(--tint), var(--surface));
+  }
+  .verdict .mark { font-size: 26px; line-height: 1; color: var(--ci); }
+  .verdict .txt strong { display: block; font-size: 19px; letter-spacing: -0.01em; }
+  .verdict .txt span { color: var(--ink-2); font-size: 13.5px; }
+  .stats { display: flex; gap: 22px; flex-wrap: wrap; }
+  .stat .label { font-size: 12px; color: var(--ink-muted); text-transform: uppercase; letter-spacing: 0.04em; }
+  .stat .value { font-size: 17px; font-weight: 600; }
+
+  [data-r="good"] { --c: var(--good); --ci: var(--good-ink); }
+  [data-r="ok"]   { --c: var(--ok);   --ci: var(--ok-ink); }
+  [data-r="bad"]  { --c: var(--bad);  --ci: var(--bad-ink); }
+  [data-r="none"] { --c: var(--ink-muted); --ci: var(--ink-muted); }
+
+  /* ---------- day tabs ---------- */
+  .tabs { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 12px; }
+  .tabs button { border-radius: 999px; }
+  .tabs button[aria-selected="true"] { background: var(--ink); color: var(--surface); border-color: var(--ink); }
+
+  /* ---------- day strip ---------- */
+  .strip { display: grid; grid-template-columns: repeat(24, 1fr); gap: 2px; }
+  .strip .cell {
+    height: 26px; border-radius: 3px;
+    background: color-mix(in srgb, var(--c) 78%, var(--surface));
+    border: 0; padding: 0; cursor: pointer;
+  }
+  .strip .cell[data-r="none"] { background: color-mix(in srgb, var(--ink-muted) 18%, var(--surface)); }
+  .strip .cell.now { outline: 2px solid var(--ink); outline-offset: 1px; }
+  .strip .cell.past { opacity: 0.38; }
+  .strip .cell:hover { filter: brightness(1.08); }
+  .ticks { display: grid; grid-template-columns: repeat(4, 1fr); gap: 2px; margin-top: 5px; }
+  .ticks span { font-size: 11px; color: var(--ink-muted); font-variant-numeric: tabular-nums; }
+
+  /* ---------- hour rows ---------- */
+  .hours { display: grid; gap: 6px; }
+  .hour {
+    display: grid;
+    grid-template-columns: 74px 118px 1fr;
+    gap: 12px; align-items: center;
+    padding: 9px 12px;
+    border: 1px solid var(--ring);
+    border-radius: 11px;
+    background: color-mix(in srgb, var(--c) 9%, var(--surface));
+  }
+  .hour.now { border-color: var(--ink); }
+  .hour .time { font-variant-numeric: tabular-nums; font-weight: 600; font-size: 14px; }
+  .hour .time small { display: block; font-weight: 400; color: var(--ink-muted); font-size: 11px; }
+  .pill {
+    display: inline-flex; align-items: center; gap: 7px;
+    padding: 5px 10px; border-radius: 999px;
+    background: color-mix(in srgb, var(--c) var(--tint), var(--surface));
+    border: 1px solid color-mix(in srgb, var(--c) 45%, transparent);
+    font-size: 13px; font-weight: 600; color: var(--ci);
+    white-space: nowrap;
+  }
+  .pill .mark { font-size: 13px; }
+  .chips { display: flex; flex-wrap: wrap; gap: 6px; }
+  .chip {
+    display: inline-flex; align-items: center; gap: 6px;
+    padding: 4px 9px; border-radius: 8px;
+    border: 1px solid var(--ring);
+    background: var(--surface);
+    font-size: 12.5px; color: var(--ink-2);
+    white-space: nowrap;
+  }
+  .chip .dot { width: 9px; height: 9px; border-radius: 50%; background: var(--c); flex: none; }
+  .chip .v { color: var(--ink); font-weight: 600; font-variant-numeric: tabular-nums; }
+  .chip .sym { color: var(--ci); font-weight: 700; font-size: 11px; }
+
+  @media (max-width: 680px) {
+    .hour { grid-template-columns: 68px 1fr; }
+    .hour .pill { justify-self: start; }
+    .hour .chips { grid-column: 1 / -1; }
+  }
+
+  /* ---------- settings ---------- */
+  details.settings summary { cursor: pointer; font-weight: 600; }
+  .prefgrid { display: grid; gap: 14px; margin-top: 14px; grid-template-columns: repeat(auto-fit, minmax(210px, 1fr)); }
+  .pref .label { font-size: 12px; color: var(--ink-muted); text-transform: uppercase; letter-spacing: 0.04em; margin-bottom: 6px; }
+  .legend { display: flex; gap: 16px; flex-wrap: wrap; font-size: 13px; color: var(--ink-2); }
+  .legend .item { display: inline-flex; align-items: center; gap: 7px; }
+  .legend .sw { width: 12px; height: 12px; border-radius: 3px; background: var(--c); }
+  table.rules { border-collapse: collapse; width: 100%; font-size: 13px; margin-top: 10px; }
+  table.rules th, table.rules td { text-align: left; padding: 6px 10px 6px 0; border-bottom: 1px solid var(--hairline); vertical-align: top; }
+  table.rules th { color: var(--ink-muted); font-weight: 600; }
+  footer { color: var(--ink-muted); font-size: 12.5px; text-align: center; margin-top: 10px; }
+  footer a { color: inherit; }
+  .hidden { display: none !important; }
+  .spinner { display: inline-block; width: 14px; height: 14px; border: 2px solid var(--ring); border-top-color: var(--ink-2); border-radius: 50%; animation: spin 0.8s linear infinite; vertical-align: -2px; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  @media (prefers-reduced-motion: reduce) { .spinner { animation: none; } }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header class="bar">
+    <div class="brand">
+      <h1>Porch Weather</h1>
+      <span class="sub" id="updated"></span>
+    </div>
+    <div class="controls">
+      <div class="seg" role="group" aria-label="Units">
+        <button type="button" id="unitF" aria-pressed="true">°F</button>
+        <button type="button" id="unitC" aria-pressed="false">°C</button>
+      </div>
+      <button type="button" id="refresh">Refresh</button>
+    </div>
+  </header>
+
+  <!-- location -->
+  <section class="card" id="locCard">
+    <h2>Location</h2>
+    <div class="locrow">
+      <span class="locname" id="locName">Not set</span>
+      <button type="button" class="ghost" id="changeLoc">Change</button>
+    </div>
+    <div id="locPicker" class="hidden" style="margin-top:12px">
+      <div class="locrow">
+        <input type="search" id="locQuery" placeholder="City, town or ZIP — e.g. Asheville or 28801" autocomplete="off">
+        <button type="button" class="primary" id="locSearch">Search</button>
+        <button type="button" id="locGeo">Use my location</button>
+      </div>
+      <ul class="results" id="locResults"></ul>
+      <p class="note" id="locNote"></p>
+    </div>
+  </section>
+
+  <!-- right now -->
+  <section class="card hidden" id="nowCard">
+    <h2>Right now</h2>
+    <div class="hero">
+      <div class="verdict" id="nowVerdict" data-r="none">
+        <span class="mark" id="nowMark">–</span>
+        <span class="txt"><strong id="nowLabel">–</strong><span id="nowWhy"></span></span>
+      </div>
+      <div class="stats">
+        <div class="stat"><div class="label">Feels like</div><div class="value" id="nowTemp">–</div></div>
+        <div class="stat"><div class="label">Humidity</div><div class="value" id="nowHum">–</div></div>
+        <div class="stat"><div class="label">Wind</div><div class="value" id="nowWind">–</div></div>
+        <div class="stat"><div class="label">Sky</div><div class="value" id="nowSky">–</div></div>
+      </div>
+    </div>
+    <p class="note" id="bestWindow" style="margin:14px 0 0"></p>
+  </section>
+
+  <!-- forecast -->
+  <section class="card hidden" id="dayCard">
+    <div class="tabs" id="dayTabs" role="tablist" aria-label="Forecast day"></div>
+    <div class="strip" id="strip" role="img" aria-label="Hourly porch rating overview"></div>
+    <div class="ticks" id="ticks" aria-hidden="true"></div>
+    <p class="note" id="daySummary" style="margin:12px 0 14px"></p>
+    <div class="hours" id="hours"></div>
+  </section>
+
+  <section class="card hidden" id="errCard"><p class="err" id="errMsg"></p></section>
+
+  <!-- settings -->
+  <section class="card">
+    <details class="settings" id="settings">
+      <summary>Settings &amp; how the ratings work</summary>
+
+      <div class="prefgrid">
+        <div class="pref">
+          <div class="label">Sun preference</div>
+          <select id="prefSun">
+            <option value="any">No strong preference</option>
+            <option value="sun">I like sun on the porch</option>
+            <option value="shade">I'd rather have shade / overcast</option>
+          </select>
+        </div>
+        <div class="pref">
+          <div class="label">Temperature comfort</div>
+          <select id="prefTemp">
+            <option value="cold">I run cold (like it warmer)</option>
+            <option value="neutral">Average</option>
+            <option value="warm">I run warm (like it cooler)</option>
+          </select>
+        </div>
+        <div class="pref">
+          <div class="label">Hours shown</div>
+          <select id="prefHours">
+            <option value="waking">6 AM – 11 PM</option>
+            <option value="all">All 24 hours</option>
+          </select>
+        </div>
+      </div>
+
+      <h2 style="margin-top:22px">Legend</h2>
+      <div class="legend">
+        <span class="item" data-r="good"><span class="sw"></span>✓ Green — go sit outside</span>
+        <span class="item" data-r="ok"><span class="sw"></span>~ Yellow — workable, with a caveat</span>
+        <span class="item" data-r="bad"><span class="sw"></span>✕ Red — stay in</span>
+      </div>
+
+      <table class="rules">
+        <thead><tr><th>Factor</th><th>Green</th><th>Yellow</th><th>Red</th><th>Weight</th></tr></thead>
+        <tbody>
+          <tr><td>Temperature (feels-like)</td><td>64–78 °F</td><td>~55–64 / 78–86 °F</td><td>below ~50 or above ~90 °F</td><td>30%</td></tr>
+          <tr><td>Humidity (by dew point)</td><td>dew pt under 60 °F</td><td>60–68 °F</td><td>above ~70 °F — muggy</td><td>20%</td></tr>
+          <tr><td>Wind</td><td>0–10 mph, gusts under 18</td><td>10–18 mph or gusty</td><td>over ~20 mph or gusts over 30</td><td>20%</td></tr>
+          <tr><td>Rain</td><td>under 15% chance</td><td>15–50%</td><td>over ~55% or measurable rain</td><td>20%</td></tr>
+          <tr><td>Cloud cover</td><td>depends on your sun preference</td><td>–</td><td>–</td><td>10%</td></tr>
+        </tbody>
+      </table>
+      <p class="note">An hour is green only when <em>every</em> factor is green — one yellow factor keeps it at yellow, and one red factor does too. Something genuinely bad (a thunderstorm, 25&nbsp;mph wind, 95&nbsp;°F) turns the whole hour red no matter how good everything else looks. Comfort bands shift a few degrees with your temperature setting, and after dark cloud cover stops counting.</p>
+    </details>
+  </section>
+
+  <footer>
+    Forecast by <a href="https://open-meteo.com/" target="_blank" rel="noopener">Open-Meteo</a> · no account, no API key, no tracking.
+    Your location and settings stay in this browser.
+  </footer>
+</div>
+
+<script>
+(() => {
+  "use strict";
+
+  /* ---------------------------------------------------------------
+     State + persistence
+  --------------------------------------------------------------- */
+  const LS_LOC = "porch.location";
+  const LS_PREFS = "porch.prefs";
+
+  const defaults = { units: "F", sun: "any", temp: "neutral", hours: "waking" };
+  let prefs = Object.assign({}, defaults, load(LS_PREFS));
+  let location_ = load(LS_LOC);
+  let data = null;          // scored forecast
+  let activeDay = 0;
+  let fetchedAt = null;
+
+  function load(key) {
+    try { return JSON.parse(localStorage.getItem(key) || "null") || null; }
+    catch (_) { return null; }
+  }
+  function save(key, value) {
+    try { localStorage.setItem(key, JSON.stringify(value)); } catch (_) {}
+  }
+
+  // ?lat=&lon=&name=&units= override anything stored
+  const qs = new URLSearchParams(window.location.search);
+  if (qs.has("lat") && qs.has("lon")) {
+    location_ = {
+      lat: parseFloat(qs.get("lat")),
+      lon: parseFloat(qs.get("lon")),
+      name: qs.get("name") || "Custom location"
+    };
+  }
+  if (qs.get("units") === "C" || qs.get("units") === "F") prefs.units = qs.get("units");
+
+  /* ---------------------------------------------------------------
+     Scoring
+     Everything is scored on imperial values (°F, mph, inches) so the
+     unit toggle is purely a display concern.
+     score 70-100 = green, 40-69 = yellow, 0-39 = red
+  --------------------------------------------------------------- */
+  const GREEN = 70, YELLOW = 40;
+
+  function ratingOf(score) { return score >= GREEN ? "good" : score >= YELLOW ? "ok" : "bad"; }
+  const MARK = { good: "✓", ok: "~", bad: "✕", none: "–" };
+  const WORD = { good: "Great", ok: "So-so", bad: "Rough", none: "—" };
+
+  // piecewise-linear interpolation over [[x, score], ...] ascending in x
+  function ramp(x, pts) {
+    if (x <= pts[0][0]) return pts[0][1];
+    for (let i = 1; i < pts.length; i++) {
+      const [x0, y0] = pts[i - 1], [x1, y1] = pts[i];
+      if (x <= x1) return y0 + (y1 - y0) * ((x - x0) / (x1 - x0));
+    }
+    return pts[pts.length - 1][1];
+  }
+  const clamp = (v, lo, hi) => Math.max(lo, Math.min(hi, v));
+
+  function tempShift() {
+    return prefs.temp === "cold" ? 4 : prefs.temp === "warm" ? -4 : 0;
+  }
+
+  function scoreTemp(feels) {
+    const shift = tempShift();
+    const lo = 64 + shift, hi = 78 + shift;
+    if (feels >= lo && feels <= hi) return { score: 100, note: "comfortable" };
+    if (feels < lo) {
+      const s = clamp(100 - (lo - feels) * 3.6, 0, 100);
+      return { score: s, note: s >= GREEN ? "a touch cool" : s >= YELLOW ? "chilly — bring a layer" : "too cold" };
+    }
+    const s = clamp(100 - (feels - hi) * 5.4, 0, 100);
+    return { score: s, note: s >= GREEN ? "a touch warm" : s >= YELLOW ? "hot" : "too hot" };
+  }
+
+  function scoreHumidity(dew, rh) {
+    let s = ramp(dew, [[45, 100], [58, 100], [62, 84], [66, 66], [70, 44], [74, 20], [80, 4]]);
+    if (rh >= 92) s -= 10;                       // clammy even when cool
+    s = clamp(s, 0, 100);
+    const note = dew < 58 ? "dry and pleasant"
+      : dew < 63 ? "slightly sticky"
+      : dew < 68 ? "noticeably humid"
+      : dew < 73 ? "muggy" : "oppressive";
+    return { score: s, note: note };
+  }
+
+  function scoreWind(mph, gust) {
+    let s = ramp(mph, [[0, 88], [3, 96], [6, 100], [10, 88], [14, 70], [18, 50], [23, 28], [30, 8], [40, 0]]);
+    if (gust >= 30) s = Math.min(s, 28);         // things blow off the table
+    else if (gust >= 22) s = Math.min(s, 55);
+    s = clamp(s, 0, 100);
+    const note = mph < 4 ? "still air"
+      : mph < 11 ? "light breeze"
+      : mph < 18 ? "breezy" : "windy";
+    return { score: s, note: gust >= 22 ? note + ", gusty" : note };
+  }
+
+  function scoreRain(prob, amount, code) {
+    let s = ramp(prob, [[0, 100], [10, 100], [20, 90], [30, 76], [45, 56], [60, 34], [80, 14], [100, 0]]);
+    if (amount >= 0.04) s = Math.min(s, 28);     // ~1 mm/hr, actually falling
+    else if (amount > 0.004) s = Math.min(s, 45);
+    if (code >= 95) s = Math.min(s, 5);          // thunderstorm
+    s = clamp(s, 0, 100);
+    const note = code >= 95 ? "thunderstorms"
+      : amount >= 0.04 ? "rain falling"
+      : prob >= 55 ? "rain likely"
+      : prob >= 25 ? "chance of showers" : "dry";
+    return { score: s, note: note };
+  }
+
+  function scoreCloud(pct, isDay) {
+    if (!isDay) return { score: 80, note: "after dark", neutral: true };
+    let s, note;
+    if (prefs.sun === "sun") {
+      s = ramp(pct, [[0, 100], [25, 100], [50, 80], [75, 56], [100, 36]]);
+      note = pct < 25 ? "sunny" : pct < 60 ? "some sun" : pct < 88 ? "mostly cloudy" : "overcast";
+    } else if (prefs.sun === "shade") {
+      s = ramp(pct, [[0, 38], [20, 52], [45, 76], [70, 94], [100, 100]]);
+      note = pct < 25 ? "bright sun" : pct < 60 ? "partly cloudy" : pct < 88 ? "nicely shaded" : "overcast";
+    } else {
+      s = ramp(pct, [[0, 86], [12, 94], [25, 100], [70, 100], [88, 82], [100, 68]]);
+      note = pct < 12 ? "clear" : pct < 40 ? "mostly sunny" : pct < 70 ? "partly cloudy" : pct < 88 ? "mostly cloudy" : "overcast";
+    }
+    return { score: clamp(s, 0, 100), note: note };
+  }
+
+  const WEIGHTS = { temp: 0.30, humidity: 0.20, wind: 0.20, rain: 0.20, cloud: 0.10 };
+  const FACTOR_LABEL = { temp: "Temp", humidity: "Humidity", wind: "Wind", rain: "Rain", cloud: "Sky" };
+
+  function scoreHour(h) {
+    const f = {
+      temp: scoreTemp(h.feels),
+      humidity: scoreHumidity(h.dew, h.rh),
+      wind: scoreWind(h.wind, h.gust),
+      rain: scoreRain(h.rainProb, h.rainAmt, h.code),
+      cloud: scoreCloud(h.cloud, h.isDay)
+    };
+
+    let total = 0, weight = 0;
+    for (const k in WEIGHTS) {
+      if (f[k].neutral) continue;               // e.g. cloud cover at night
+      total += f[k].score * WEIGHTS[k];
+      weight += WEIGHTS[k];
+    }
+    let overall = weight ? total / weight : 0;
+
+    // A single dealbreaker outranks a good average.
+    const scores = Object.keys(WEIGHTS).filter(k => !f[k].neutral).map(k => f[k].score);
+    const worst = Math.min.apply(null, scores);
+    if (worst < 20) overall = Math.min(overall, 34);        // dealbreaker: the hour is red
+    else if (worst < YELLOW) overall = Math.min(overall, 62); // one red factor caps the hour at yellow
+    else if (worst < GREEN) overall = Math.min(overall, 69);  // green means every factor is green
+
+    for (const k in f) f[k].rating = ratingOf(f[k].score);
+    return { factors: f, score: overall, rating: ratingOf(overall) };
+  }
+
+  /* ---------------------------------------------------------------
+     Fetching
+  --------------------------------------------------------------- */
+  const HOURLY = [
+    "temperature_2m", "apparent_temperature", "relative_humidity_2m", "dew_point_2m",
+    "precipitation_probability", "precipitation", "weather_code", "cloud_cover",
+    "wind_speed_10m", "wind_gusts_10m", "uv_index", "is_day"
+  ].join(",");
+
+  async function fetchForecast(loc) {
+    const url = "https://api.open-meteo.com/v1/forecast"
+      + "?latitude=" + encodeURIComponent(loc.lat)
+      + "&longitude=" + encodeURIComponent(loc.lon)
+      + "&hourly=" + HOURLY
+      + "&forecast_days=3&timezone=auto"
+      + "&temperature_unit=fahrenheit&wind_speed_unit=mph&precipitation_unit=inch";
+    const res = await fetch(url);
+    if (!res.ok) throw new Error("Weather service returned " + res.status);
+    const json = await res.json();
+    if (!json.hourly || !json.hourly.time) throw new Error("Unexpected response from the weather service.");
+    return json;
+  }
+
+  // "YYYY-MM-DDTHH:00" for the current hour in the forecast's own timezone,
+  // so "now" is right even when the porch is in another time zone.
+  function nowKey(tz) {
+    const p = new Intl.DateTimeFormat("en-CA", {
+      timeZone: tz, year: "numeric", month: "2-digit", day: "2-digit", hour: "2-digit", hour12: false
+    }).formatToParts(new Date()).reduce((a, x) => (a[x.type] = x.value, a), {});
+    const hh = p.hour === "24" ? "00" : p.hour;
+    return p.year + "-" + p.month + "-" + p.day + "T" + hh + ":00";
+  }
+
+  function build(json) {
+    const H = json.hourly;
+    const hours = H.time.map((t, i) => {
+      const h = {
+        time: t,
+        date: t.slice(0, 10),
+        hour: parseInt(t.slice(11, 13), 10),
+        temp: H.temperature_2m[i],
+        feels: H.apparent_temperature[i] != null ? H.apparent_temperature[i] : H.temperature_2m[i],
+        rh: H.relative_humidity_2m[i],
+        dew: H.dew_point_2m[i],
+        rainProb: H.precipitation_probability[i] == null ? 0 : H.precipitation_probability[i],
+        rainAmt: H.precipitation[i] == null ? 0 : H.precipitation[i],
+        code: H.weather_code[i],
+        cloud: H.cloud_cover[i],
+        wind: H.wind_speed_10m[i],
+        gust: H.wind_gusts_10m[i] == null ? H.wind_speed_10m[i] : H.wind_gusts_10m[i],
+        uv: H.uv_index ? H.uv_index[i] : null,
+        isDay: H.is_day[i] === 1
+      };
+      Object.assign(h, scoreHour(h));
+      return h;
+    });
+
+    const days = [];
+    hours.forEach(h => {
+      let d = days[days.length - 1];
+      if (!d || d.date !== h.date) { d = { date: h.date, hours: [] }; days.push(d); }
+      d.hours.push(h);
+    });
+
+    const key = nowKey(json.timezone);
+    return { tz: json.timezone, hours: hours, days: days, nowKey: key,
+             now: hours.find(h => h.time === key) || null };
+  }
+
+  function rescore() {
+    if (!data) return;
+    data.hours.forEach(h => Object.assign(h, scoreHour(h)));
+  }
+
+  /* ---------------------------------------------------------------
+     Display helpers
+  --------------------------------------------------------------- */
+  const fToC = f => (f - 32) * 5 / 9;
+  const mphToKmh = m => m * 1.609344;
+
+  function temp(f, withUnit) {
+    const v = prefs.units === "C" ? fToC(f) : f;
+    return Math.round(v) + (withUnit === false ? "°" : "°" + prefs.units);
+  }
+  function wind(m) {
+    return prefs.units === "C" ? Math.round(mphToKmh(m)) + " km/h" : Math.round(m) + " mph";
+  }
+  function hourLabel(h) {
+    if (prefs.units === "C") return String(h).padStart(2, "0") + ":00";
+    const ampm = h < 12 ? "AM" : "PM";
+    const hh = h % 12 === 0 ? 12 : h % 12;
+    return hh + " " + ampm;
+  }
+  function dayName(dateStr, i) {
+    if (i === 0) return "Today";
+    if (i === 1) return "Tomorrow";
+    const d = new Date(dateStr + "T12:00:00");
+    return d.toLocaleDateString(undefined, { weekday: "long" });
+  }
+  const SKY = {
+    0: "Clear", 1: "Mostly clear", 2: "Partly cloudy", 3: "Overcast",
+    45: "Fog", 48: "Freezing fog", 51: "Light drizzle", 53: "Drizzle", 55: "Heavy drizzle",
+    56: "Freezing drizzle", 57: "Freezing drizzle", 61: "Light rain", 63: "Rain", 65: "Heavy rain",
+    66: "Freezing rain", 67: "Freezing rain", 71: "Light snow", 73: "Snow", 75: "Heavy snow",
+    77: "Snow grains", 80: "Light showers", 81: "Showers", 82: "Heavy showers",
+    85: "Snow showers", 86: "Snow showers", 95: "Thunderstorm", 96: "Thunderstorm with hail",
+    99: "Thunderstorm with hail"
+  };
+  const skyText = c => SKY[c] || "—";
+
+  function visibleHours(day, todayFilter) {
+    let hs = day.hours;
+    if (prefs.hours === "waking") hs = hs.filter(h => h.hour >= 6 && h.hour <= 23);
+    if (todayFilter && data.now) hs = hs.filter(h => h.time >= data.nowKey);
+    return hs;
+  }
+
+  // Longest run of green hours (falls back to yellow) inside a day.
+  function bestWindow(day, fromNow) {
+    const hs = visibleHours(day, fromNow);
+    for (const target of ["good", "ok"]) {
+      let best = null, run = null;
+      for (let i = 0; i <= hs.length; i++) {
+        const ok = i < hs.length && hs[i].rating === target && hs[i].hour >= 6 && hs[i].hour <= 23;
+        if (ok) { if (!run) run = { start: hs[i], end: hs[i], n: 0 }; run.end = hs[i]; run.n++; }
+        else if (run) { if (!best || run.n > best.n) best = run; run = null; }
+      }
+      if (best) return { run: best, rating: target };
+    }
+    return null;
+  }
+
+  function whyLine(h) {
+    const f = h.factors;
+    const bad = Object.keys(WEIGHTS).filter(k => !f[k].neutral && f[k].rating === "bad");
+    const meh = Object.keys(WEIGHTS).filter(k => !f[k].neutral && f[k].rating === "ok");
+    if (h.rating === "good") {
+      return cap(f.temp.note) + ", " + f.humidity.note + ", " + f.wind.note + ".";
+    }
+    const list = (bad.length ? bad : meh).map(k => f[k].note);
+    const uniq = list.filter((v, i) => list.indexOf(v) === i).slice(0, 3);
+    const lead = (bad.indexOf("temp") < 0 && meh.indexOf("temp") < 0) ? temp(h.feels) + " but " : "";
+    return cap(lead + uniq.join(", ")) + ".";
+  }
+  const cap = s => s.charAt(0).toUpperCase() + s.slice(1);
+
+  /* ---------------------------------------------------------------
+     Rendering
+  --------------------------------------------------------------- */
+  const $ = id => document.getElementById(id);
+
+  function render() {
+    $("unitF").setAttribute("aria-pressed", String(prefs.units === "F"));
+    $("unitC").setAttribute("aria-pressed", String(prefs.units === "C"));
+    $("prefSun").value = prefs.sun;
+    $("prefTemp").value = prefs.temp;
+    $("prefHours").value = prefs.hours;
+    $("locName").textContent = location_ ? location_.name : "Not set";
+
+    if (!data) return;
+    renderNow();
+    renderTabs();
+    renderDay();
+    $("nowCard").classList.remove("hidden");
+    $("dayCard").classList.remove("hidden");
+    if (fetchedAt) {
+      $("updated").textContent = "updated " + fetchedAt.toLocaleTimeString(undefined, { hour: "numeric", minute: "2-digit" });
+    }
+  }
+
+  function renderNow() {
+    const h = data.now;
+    const v = $("nowVerdict");
+    if (!h) {
+      v.dataset.r = "none"; $("nowMark").textContent = "–";
+      $("nowLabel").textContent = "No current-hour data";
+      $("nowWhy").textContent = ""; return;
+    }
+    v.dataset.r = h.rating;
+    $("nowMark").textContent = MARK[h.rating];
+    $("nowLabel").textContent = h.rating === "good" ? "Good porch weather"
+      : h.rating === "ok" ? "Passable — with a caveat" : "Not porch weather";
+    $("nowWhy").textContent = whyLine(h);
+    $("nowTemp").textContent = temp(h.feels) + " (air " + temp(h.temp, false) + ")";
+    $("nowHum").textContent = Math.round(h.rh) + "% · dew " + temp(h.dew, false);
+    $("nowWind").textContent = wind(h.wind) + " · gusts " + wind(h.gust);
+    $("nowSky").textContent = skyText(h.code) + " · " + Math.round(h.cloud) + "% cloud";
+
+    const day = data.days[0];
+    const bw = day ? bestWindow(day, true) : null;
+    const el = $("bestWindow");
+    if (bw) {
+      const start = hourLabel(bw.run.start.hour);
+      const end = hourLabel((bw.run.end.hour + 1) % 24);
+      el.innerHTML = "<strong>Best stretch left today:</strong> " + start + " – " + end
+        + " (" + bw.run.n + (bw.run.n === 1 ? " hour" : " hours") + ", "
+        + (bw.rating === "good" ? "green" : "yellow — nothing green left today") + ").";
+    } else {
+      el.innerHTML = "<strong>Best stretch left today:</strong> nothing worth sitting out for — check tomorrow.";
+    }
+  }
+
+  function renderTabs() {
+    const tabs = $("dayTabs");
+    tabs.innerHTML = "";
+    data.days.forEach((d, i) => {
+      const b = document.createElement("button");
+      b.type = "button";
+      b.setAttribute("role", "tab");
+      b.setAttribute("aria-selected", String(i === activeDay));
+      b.textContent = dayName(d.date, i);
+      b.addEventListener("click", () => { activeDay = i; renderTabs(); renderDay(); });
+      tabs.appendChild(b);
+    });
+  }
+
+  function renderDay() {
+    const day = data.days[activeDay];
+    if (!day) return;
+
+    // 24-hour strip
+    const strip = $("strip");
+    strip.innerHTML = "";
+    const byHour = {};
+    day.hours.forEach(h => byHour[h.hour] = h);
+    for (let i = 0; i < 24; i++) {
+      const h = byHour[i];
+      const cell = document.createElement("button");
+      cell.type = "button";
+      cell.className = "cell";
+      cell.dataset.r = h ? h.rating : "none";
+      cell.title = hourLabel(i) + " — " + (h ? WORD[h.rating] + " · " + temp(h.feels) + ", " + Math.round(h.rh) + "% humidity, " + wind(h.wind) : "no data");
+      cell.setAttribute("aria-label", cell.title);
+      if (h && h.time === data.nowKey) cell.classList.add("now");
+      else if (h && h.time < data.nowKey) cell.classList.add("past");
+      if (h) cell.addEventListener("click", () => {
+        const row = document.getElementById("hr-" + h.time);
+        if (row) row.scrollIntoView({ behavior: "smooth", block: "center" });
+      });
+      strip.appendChild(cell);
+    }
+    const ticks = $("ticks");
+    ticks.innerHTML = "";
+    [0, 6, 12, 18].forEach(i => {
+      const s = document.createElement("span");
+      s.textContent = hourLabel(i);
+      ticks.appendChild(s);
+    });
+
+    // summary
+    const shown = visibleHours(day, activeDay === 0);
+    const counts = { good: 0, ok: 0, bad: 0 };
+    shown.forEach(h => counts[h.rating]++);
+    const bw = bestWindow(day, activeDay === 0);
+    let summary = counts.good + " green, " + counts.ok + " yellow, " + counts.bad + " red"
+      + (activeDay === 0 ? " in the hours left today" : " between 6 AM and 11 PM") + ".";
+    if (bw && activeDay !== 0) {
+      summary += " Best stretch: " + hourLabel(bw.run.start.hour) + " – " + hourLabel((bw.run.end.hour + 1) % 24) + ".";
+    }
+    $("daySummary").textContent = summary;
+
+    // hour rows
+    const wrap = $("hours");
+    wrap.innerHTML = "";
+    if (!shown.length) {
+      const p = document.createElement("p");
+      p.className = "note";
+      p.textContent = "No hours left to show for today.";
+      wrap.appendChild(p);
+      return;
+    }
+    shown.forEach(h => wrap.appendChild(hourRow(h)));
+  }
+
+  function hourRow(h) {
+    const row = document.createElement("div");
+    row.className = "hour";
+    row.id = "hr-" + h.time;
+    row.dataset.r = h.rating;
+    if (h.time === data.nowKey) row.classList.add("now");
+
+    const t = document.createElement("div");
+    t.className = "time";
+    t.innerHTML = hourLabel(h.hour) + (h.time === data.nowKey ? "<small>now</small>" : (h.isDay ? "" : "<small>dark</small>"));
+    row.appendChild(t);
+
+    const pill = document.createElement("div");
+    pill.className = "pill";
+    pill.dataset.r = h.rating;
+    pill.innerHTML = '<span class="mark" aria-hidden="true">' + MARK[h.rating] + "</span>" + WORD[h.rating];
+    row.appendChild(pill);
+
+    const chips = document.createElement("div");
+    chips.className = "chips";
+    chips.appendChild(chip(h.factors.temp, "Feels", temp(h.feels)));
+    chips.appendChild(chip(h.factors.humidity, "Humidity", Math.round(h.rh) + "%"));
+    chips.appendChild(chip(h.factors.wind, "Wind", wind(h.wind)));
+    chips.appendChild(chip(h.factors.rain, "Rain", Math.round(h.rainProb) + "%"));
+    chips.appendChild(chip(h.factors.cloud, "Cloud", Math.round(h.cloud) + "%"));
+    row.appendChild(chips);
+    return row;
+  }
+
+  function chip(factor, label, value) {
+    const c = document.createElement("span");
+    c.className = "chip";
+    c.dataset.r = factor.neutral ? "none" : factor.rating;
+    c.title = label + " " + value + " — " + factor.note;
+    c.innerHTML = '<span class="dot" aria-hidden="true"></span>'
+      + '<span class="k">' + label + "</span>"
+      + '<span class="v">' + value + "</span>"
+      + '<span class="sym" aria-hidden="true">' + (factor.neutral ? "" : MARK[factor.rating]) + "</span>"
+      + '<span class="sr">' + (factor.neutral ? "not counted" : WORD[factor.rating]) + " — " + factor.note + "</span>";
+    return c;
+  }
+
+  /* ---------------------------------------------------------------
+     Loading + errors
+  --------------------------------------------------------------- */
+  function showError(msg) {
+    $("errMsg").textContent = msg;
+    $("errCard").classList.remove("hidden");
+  }
+  function clearError() { $("errCard").classList.add("hidden"); }
+
+  async function reload() {
+    if (!location_) { $("locPicker").classList.remove("hidden"); return; }
+    clearError();
+    $("updated").innerHTML = '<span class="spinner"></span>';
+    try {
+      const json = await fetchForecast(location_);
+      data = build(json);
+      fetchedAt = new Date();
+      activeDay = Math.min(activeDay, data.days.length - 1);
+      render();
+    } catch (e) {
+      $("updated").textContent = "";
+      showError("Couldn't load the forecast: " + e.message + " — check your connection and hit Refresh.");
+    }
+  }
+
+  /* ---------------------------------------------------------------
+     Location picking
+  --------------------------------------------------------------- */
+  function setLocation(loc) {
+    location_ = loc;
+    save(LS_LOC, loc);
+    $("locName").textContent = loc.name;
+    $("locPicker").classList.add("hidden");
+    $("locResults").innerHTML = "";
+    $("locNote").textContent = "";
+    reload();
+  }
+
+  async function searchPlaces() {
+    const q = $("locQuery").value.trim();
+    if (!q) return;
+    $("locNote").innerHTML = '<span class="spinner"></span> Searching…';
+    $("locResults").innerHTML = "";
+    try {
+      const res = await fetch("https://geocoding-api.open-meteo.com/v1/search?count=6&language=en&format=json&name=" + encodeURIComponent(q));
+      const json = await res.json();
+      const list = json.results || [];
+      if (!list.length) { $("locNote").textContent = "No match for “" + q + "”. Try a nearby larger town."; return; }
+      $("locNote").textContent = "";
+      const ul = $("locResults");
+      list.forEach(r => {
+        const parts = [r.name, r.admin1, r.country].filter(Boolean);
+        const label = parts.join(", ");
+        const li = document.createElement("li");
+        const b = document.createElement("button");
+        b.type = "button";
+        b.textContent = label;
+        b.addEventListener("click", () => setLocation({ lat: r.latitude, lon: r.longitude, name: label }));
+        li.appendChild(b);
+        ul.appendChild(li);
+      });
+    } catch (e) {
+      $("locNote").textContent = "Search failed: " + e.message;
+    }
+  }
+
+  function useGeolocation() {
+    if (!navigator.geolocation) { $("locNote").textContent = "This browser won't share a location — search by name instead."; return; }
+    $("locNote").innerHTML = '<span class="spinner"></span> Asking your browser…';
+    navigator.geolocation.getCurrentPosition(async pos => {
+      const lat = pos.coords.latitude, lon = pos.coords.longitude;
+      let name = lat.toFixed(3) + ", " + lon.toFixed(3);
+      try {
+        const res = await fetch("https://geocoding-api.open-meteo.com/v1/search?count=1&language=en&format=json&name="
+          + encodeURIComponent(lat.toFixed(2) + "," + lon.toFixed(2)));
+        const json = await res.json();
+        if (json.results && json.results[0]) {
+          const r = json.results[0];
+          name = [r.name, r.admin1].filter(Boolean).join(", ");
+        }
+      } catch (_) {}
+      setLocation({ lat: lat, lon: lon, name: name });
+    }, err => {
+      $("locNote").textContent = "Couldn't get your location (" + err.message + "). Search by name instead.";
+    }, { enableHighAccuracy: false, timeout: 12000, maximumAge: 600000 });
+  }
+
+  /* ---------------------------------------------------------------
+     Wiring
+  --------------------------------------------------------------- */
+  $("refresh").addEventListener("click", reload);
+  $("changeLoc").addEventListener("click", () => {
+    $("locPicker").classList.toggle("hidden");
+    if (!$("locPicker").classList.contains("hidden")) $("locQuery").focus();
+  });
+  $("locSearch").addEventListener("click", searchPlaces);
+  $("locQuery").addEventListener("keydown", e => { if (e.key === "Enter") { e.preventDefault(); searchPlaces(); } });
+  $("locGeo").addEventListener("click", useGeolocation);
+
+  function setPref(key, value, needsRescore) {
+    prefs[key] = value;
+    save(LS_PREFS, prefs);
+    if (needsRescore) rescore();
+    render();
+  }
+  $("unitF").addEventListener("click", () => setPref("units", "F", false));
+  $("unitC").addEventListener("click", () => setPref("units", "C", false));
+  $("prefSun").addEventListener("change", e => setPref("sun", e.target.value, true));
+  $("prefTemp").addEventListener("change", e => setPref("temp", e.target.value, true));
+  $("prefHours").addEventListener("change", e => setPref("hours", e.target.value, false));
+
+  // keep it fresh: every 15 min, and whenever the tab comes back after 10+ min
+  setInterval(() => { if (location_ && !document.hidden) reload(); }, 15 * 60 * 1000);
+  document.addEventListener("visibilitychange", () => {
+    if (!document.hidden && fetchedAt && Date.now() - fetchedAt.getTime() > 10 * 60 * 1000) reload();
+  });
+
+  render();
+  if (location_) reload();
+  else $("locPicker").classList.remove("hidden");
+})();
+</script>
+</body>
+</html>
