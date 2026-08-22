@@ -1,7 +1,24 @@
-# Porch Weather
+# Boyle Porch Weather
 
 An hour-by-hour red / yellow / green rating for whether it's a nice time to sit
-on the porch, based on your local forecast.
+on the porch, based on local conditions at any of the Boyle porches.
+
+## The porches
+
+Four saved locations sit as one-tap buttons on the location card:
+
+| Porch | Coordinates |
+| --- | --- |
+| Essex, Connecticut | 41.3548, -72.3915 |
+| Alexandria, Virginia | 38.8048, -77.0469 |
+| Ketchum, Idaho | 43.6805, -114.3637 |
+| Hopkinton, New Hampshire | 43.1917, -71.6803 |
+
+A first visit opens on Essex; after that it remembers whichever porch you last
+looked at. "Somewhere else" still opens the search box and the use-my-location
+button for anywhere that isn't on the list. To change the saved set, edit the
+`PRESETS` array near the top of the script in `index.html` — each entry is a
+short button label, a full name, and a latitude/longitude.
 
 Open `index.html` in a browser. That's the whole thing — one file, no build step,
 no server, no API key, no account. Forecast data comes from

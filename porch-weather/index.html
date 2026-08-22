@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Porch Weather</title>
+<title>Boyle Porch Weather</title>
 <meta name="description" content="Hour-by-hour red/yellow/green rating for whether it's a nice day to sit on the porch.">
 <style>
   :root {
@@ -97,6 +97,9 @@
   .locrow { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
   .locrow input[type="search"] { flex: 1 1 220px; min-width: 0; }
   .locname { font-weight: 600; }
+  .presets { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 12px; }
+  .presets button { border-radius: 999px; font-size: 14px; }
+  .presets button[aria-pressed="true"] { background: var(--ink); color: var(--surface); border-color: var(--ink); }
   .results { list-style: none; margin: 10px 0 0; padding: 0; display: grid; gap: 6px; }
   .results li button { width: 100%; text-align: left; }
   .note { color: var(--ink-muted); font-size: 13px; }
@@ -244,7 +247,7 @@
 
   <header class="bar">
     <div class="brand">
-      <h1>Porch Weather</h1>
+      <h1>Boyle Porch Weather</h1>
       <span class="sub" id="updated"></span>
     </div>
     <div class="controls">
@@ -261,8 +264,9 @@
     <h2>Location</h2>
     <div class="locrow">
       <span class="locname" id="locName">Not set</span>
-      <button type="button" class="ghost" id="changeLoc">Change</button>
+      <button type="button" class="ghost" id="changeLoc">Somewhere else</button>
     </div>
+    <div class="presets" id="presets" role="group" aria-label="Saved porches"></div>
     <div id="locPicker" class="hidden" style="margin-top:12px">
       <div class="locrow">
         <input type="search" id="locQuery" placeholder="City, town or ZIP — e.g. Asheville or 28801" autocomplete="off">
@@ -388,6 +392,15 @@
   --------------------------------------------------------------- */
   const LS_LOC = "porch.location";
   const LS_PREFS = "porch.prefs";
+
+  // The porches. Coordinates are town-center; Open-Meteo resolves to its own
+  // forecast grid from there.
+  const PRESETS = [
+    { short: "Essex, CT",      name: "Essex, Connecticut",       lat: 41.3548,  lon: -72.3915  },
+    { short: "Alexandria, VA", name: "Alexandria, Virginia",     lat: 38.8048,  lon: -77.0469  },
+    { short: "Ketchum, ID",    name: "Ketchum, Idaho",           lat: 43.6805,  lon: -114.3637 },
+    { short: "Hopkinton, NH",  name: "Hopkinton, New Hampshire", lat: 43.1917,  lon: -71.6803  }
+  ];
 
   const defaults = { units: "F", sun: "any", temp: "neutral", hours: "waking", view: "day" };
   let prefs = Object.assign({}, defaults, load(LS_PREFS));
@@ -751,6 +764,7 @@
     $("prefTemp").value = prefs.temp;
     $("prefHours").value = prefs.hours;
     $("locName").textContent = location_ ? location_.name : "Not set";
+    renderPresets();
 
     if (!data) return;
     $("viewDay").setAttribute("aria-pressed", String(prefs.view === "day"));
@@ -766,6 +780,23 @@
     if (fetchedAt) {
       $("updated").textContent = "updated " + fetchedAt.toLocaleTimeString(undefined, { hour: "numeric", minute: "2-digit" });
     }
+  }
+
+  function samePlace(a, b) {
+    return a && b && Math.abs(a.lat - b.lat) < 0.02 && Math.abs(a.lon - b.lon) < 0.02;
+  }
+
+  function renderPresets() {
+    const wrap = $("presets");
+    wrap.innerHTML = "";
+    PRESETS.forEach(pre => {
+      const b = document.createElement("button");
+      b.type = "button";
+      b.textContent = pre.short;
+      b.setAttribute("aria-pressed", String(samePlace(location_, pre)));
+      b.addEventListener("click", () => setLocation({ lat: pre.lat, lon: pre.lon, name: pre.name }));
+      wrap.appendChild(b);
+    });
   }
 
   function renderNow() {
@@ -1052,6 +1083,7 @@
     location_ = loc;
     save(LS_LOC, loc);
     $("locName").textContent = loc.name;
+    renderPresets();
     $("locPicker").classList.add("hidden");
     $("locResults").innerHTML = "";
     $("locNote").textContent = "";
@@ -1139,9 +1171,9 @@
     if (!document.hidden && fetchedAt && Date.now() - fetchedAt.getTime() > 10 * 60 * 1000) reload();
   });
 
+  if (!location_) location_ = { lat: PRESETS[0].lat, lon: PRESETS[0].lon, name: PRESETS[0].name };
   render();
-  if (location_) reload();
-  else $("locPicker").classList.remove("hidden");
+  reload();
 })();
 </script>
 </body>
