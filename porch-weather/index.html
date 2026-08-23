@@ -16,18 +16,19 @@
     --hairline:       #e1e0d9;
     --ring:           rgba(11,11,11,0.10);
     --shadow:         0 1px 2px rgba(11,11,11,0.05), 0 8px 24px rgba(11,11,11,0.05);
-    --glorious:       #0a7d24;
-    --good:           #0ca30c;
-    --ok:             #fab219;
-    --meh:            #ec835a;
-    --bad:            #d03b3b;
-    --glorious-ink:   #06581a;
-    --good-ink:       #006300;
-    --ok-ink:         #8a5a00;
-    --meh-ink:        #a3502a;
+    --glorious:       #1a8f3c;
+    --good:           #6cb42a;
+    --ok:             #e8b100;
+    --meh:            #e8802e;
+    --bad:            #d0392f;
+    --glorious-ink:   #0f6b2c;
+    --good-ink:       #4a7c14;
+    --ok-ink:         #8a6600;
+    --meh-ink:        #a3541a;
     --bad-ink:        #a52626;
     --tint:           22%;
     --radius:         14px;
+    --golden-mark:    #8a5f00;
   }
   @media (prefers-color-scheme: dark) {
     :root:where(:not([data-theme="light"])) {
@@ -40,12 +41,13 @@
       --hairline:     #2c2c2a;
       --ring:         rgba(255,255,255,0.10);
       --shadow:       0 1px 2px rgba(0,0,0,0.4), 0 8px 24px rgba(0,0,0,0.35);
-      --glorious-ink: #35c454;
-      --good-ink:     #4dc44d;
-      --ok-ink:       #fab219;
-      --meh-ink:      #f0a07c;
+      --glorious-ink: #3fca63;
+      --good-ink:     #93d13f;
+      --ok-ink:       #f0c33a;
+      --meh-ink:      #f0a05c;
       --bad-ink:      #ef6a6a;
       --tint:         26%;
+      --golden-mark:  #ffd166;
     }
     :root:where(:not([data-theme="light"])) .wk-cell { color: rgba(255,255,255,0.7); }
   }
@@ -222,6 +224,7 @@
   .wk-cell[data-r="none"] { background: color-mix(in srgb, var(--ink-muted) 16%, var(--surface)); cursor: default; }
   .wk-cell.past { opacity: 0.38; }
   .wk-cell.now { outline: 2px solid var(--ink); outline-offset: 1px; }
+  .wk-cell.golden { box-shadow: inset 0 -4px 0 var(--golden-mark); }
   .wk-cell:hover { filter: brightness(1.08); }
 
   /* ---------- hour rows ---------- */
@@ -239,6 +242,9 @@
   .hour .cond { display: flex; align-items: center; justify-content: center; color: var(--ink-2); }
   .hour .time { font-variant-numeric: tabular-nums; font-weight: 600; font-size: 14px; }
   .hour .time small { display: block; font-weight: 400; color: var(--ink-muted); font-size: 11px; }
+  .hour .time small.golden { color: #b07d00; font-weight: 600; }
+  :root:where(:not([data-theme="light"])) .hour .time small.golden { color: #e0a92e; }
+  .hour.golden { box-shadow: inset 3px 0 0 #e8b100; }
   .pill {
     display: inline-flex; align-items: center; gap: 7px;
     padding: 5px 10px; border-radius: 999px;
@@ -375,6 +381,7 @@
       </div>
     </div>
     <p class="note" id="bestWindow" style="margin:14px 0 0"></p>
+    <p class="note" id="sunLine" style="margin:6px 0 0"></p>
   </section>
 
   <!-- forecast -->
@@ -466,7 +473,7 @@
           <tr><td>Wind</td><td>0–10 mph, gusts under 18</td><td>10–18 mph or gusty</td><td>over ~20 mph or gusts over 30</td><td>20%</td></tr>
           <tr><td>Rain</td><td>under 15% chance</td><td>15–50%</td><td>over ~55% or measurable rain</td><td>20%</td></tr>
           <tr><td>Cloud cover</td><td>depends on your sun preference</td><td>–</td><td>–</td><td>10%</td></tr>
-          <tr><td>Air quality (US AQI)</td><td>under ~75</td><td>75–135</td><td>above ~135 — smoke or smog</td><td>12%</td></tr>
+          <tr><td>Air quality (US AQI)</td><td>under ~75</td><td>75–135</td><td>above ~135 — smoke or smog</td><td>18%</td></tr>
         </tbody>
       </table>
       <p class="note" style="margin-top:14px">Each hour carries an icon for what the sky is doing — sun, moon, cloud, fog, drizzle, rain, snow, thunderstorm — and the five chips are keyed to their factor: thermometer, droplet (humidity), wind, rain, cloud, haze (air quality). In the week grid, a block picks up a small marker when rain, snow or a thunderstorm is expected, or when air quality, wind or humidity is the thing ruining that hour. Air quality
@@ -656,7 +663,7 @@
     return { score: s, note: note, aqi: aqi };
   }
 
-  const WEIGHTS = { temp: 0.30, humidity: 0.20, wind: 0.20, rain: 0.20, cloud: 0.10, air: 0.12 };
+  const WEIGHTS = { temp: 0.30, humidity: 0.20, wind: 0.20, rain: 0.20, cloud: 0.10, air: 0.18 };
   const FACTOR_LABEL = { temp: "Temp", humidity: "Humidity", wind: "Wind", rain: "Rain", cloud: "Sky", air: "Air" };
 
   function scoreHour(h) {
@@ -704,6 +711,7 @@
       + "?latitude=" + encodeURIComponent(loc.lat)
       + "&longitude=" + encodeURIComponent(loc.lon)
       + "&hourly=" + HOURLY
+      + "&daily=sunrise,sunset"
       + "&forecast_days=7&timezone=auto"
       + "&temperature_unit=fahrenheit&wind_speed_unit=mph&precipitation_unit=inch";
     const res = await fetch(url);
@@ -741,9 +749,26 @@
     return p.year + "-" + p.month + "-" + p.day + "T" + hh + ":00";
   }
 
+  const minutesOf = t => parseInt(t.slice(11, 13), 10) * 60 + parseInt(t.slice(14, 16), 10);
+  const GOLDEN = 60;   // the hour after sunrise and the hour before sunset
+
   function build(json, air) {
     const H = json.hourly;
     const AQ = air || {};
+
+    // sunrise / sunset / golden hour, keyed by date
+    const SUN = {};
+    if (json.daily && json.daily.time) {
+      json.daily.time.forEach((d, i) => {
+        const rise = json.daily.sunrise ? json.daily.sunrise[i] : null;
+        const set = json.daily.sunset ? json.daily.sunset[i] : null;
+        if (!rise || !set) return;
+        SUN[d] = {
+          rise: rise, set: set,
+          riseMin: minutesOf(rise), setMin: minutesOf(set)
+        };
+      });
+    }
     const hours = H.time.map((t, i) => {
       const h = {
         time: t,
@@ -764,6 +789,15 @@
         aqi: AQ[t] ? AQ[t].aqi : null,
         pm25: AQ[t] ? AQ[t].pm25 : null
       };
+      const sun = SUN[h.date];
+      if (sun) {
+        const a = h.hour * 60, b = a + 60;
+        h.sun = sun;
+        h.isSunrise = sun.riseMin >= a && sun.riseMin < b;
+        h.isSunset = sun.setMin >= a && sun.setMin < b;
+        h.isGolden = (a < sun.riseMin + GOLDEN && b > sun.riseMin)
+          || (a < sun.setMin && b > sun.setMin - GOLDEN);
+      }
       Object.assign(h, scoreHour(h));
       return h;
     });
@@ -775,8 +809,10 @@
       d.hours.push(h);
     });
 
+    days.forEach(d => d.sun = SUN[d.date] || null);
+
     const key = nowKey(json.timezone);
-    return { tz: json.timezone, hours: hours, days: days, nowKey: key,
+    return { tz: json.timezone, hours: hours, days: days, sun: SUN, nowKey: key,
              now: hours.find(h => h.time === key) || null };
   }
 
@@ -850,6 +886,20 @@
     const hh = h % 12 === 0 ? 12 : h % 12;
     return hh + " " + ampm;
   }
+  // "2026-08-23T19:42" -> "7:42 PM" (or 19:42 in metric)
+  function clock(iso) {
+    if (!iso) return "—";
+    const hh = parseInt(iso.slice(11, 13), 10), mm = iso.slice(14, 16);
+    if (prefs.units === "C") return String(hh).padStart(2, "0") + ":" + mm;
+    const ampm = hh < 12 ? "AM" : "PM";
+    return (hh % 12 === 0 ? 12 : hh % 12) + ":" + mm + " " + ampm;
+  }
+  const minusMin = (iso, n) => {
+    const m = minutesOf(iso) - n, h = Math.floor((m + 1440) % 1440 / 60);
+    return iso.slice(0, 11) + String(h).padStart(2, "0") + ":" + String(((m % 60) + 60) % 60).padStart(2, "0");
+  };
+  const plusMin = (iso, n) => minusMin(iso, -n);
+
   function dayName(dateStr, i, short) {
     if (i === 0) return "Today";
     if (i === 1) return short ? "Tomorrow" : "Tomorrow";
@@ -1015,6 +1065,15 @@
     $("orbMoon").classList.toggle("hidden-orb", state !== "night");
   }
 
+  function sunSentence(day) {
+    if (!day || !day.sun) return "";
+    const s = day.sun;
+    return icon("sun", 15) + " <strong>Sunrise</strong> " + clock(s.rise)
+      + " · <strong>sunset</strong> " + clock(s.set)
+      + " · golden hour " + clock(s.rise) + "–" + clock(plusMin(s.rise, GOLDEN))
+      + " and " + clock(minusMin(s.set, GOLDEN)) + "–" + clock(s.set) + ".";
+  }
+
   function renderNow() {
     const h = data.now;
     const v = $("nowVerdict");
@@ -1055,6 +1114,7 @@
     } else {
       el.innerHTML = "<strong>Best stretch left today:</strong> nothing worth sitting out for — check tomorrow.";
     }
+    $("sunLine").innerHTML = sunSentence(day);
   }
 
   function renderTabs() {
@@ -1118,7 +1178,8 @@
     if (bw && activeDay !== 0) {
       summary += " Best stretch: " + hourLabel(bw.run.start.hour) + " – " + hourLabel((bw.run.end.hour + 1) % 24) + ".";
     }
-    $("daySummary").textContent = summary;
+    $("daySummary").innerHTML = summary
+      + (day.sun ? " Sunrise " + clock(day.sun.rise) + ", sunset " + clock(day.sun.set) + "." : "");
 
     // hour rows
     const wrap = $("hours");
@@ -1200,8 +1261,11 @@
             + " · " + temp(h.feels) + " feels (" + temp(h.temp, false) + " actual), "
             + Math.round(h.rh) + "% humidity, " + wind(h.wind)
             + ", " + Math.round(h.rainProb) + "% rain"
-            + (h.aqi == null ? "" : ", AQI " + Math.round(h.aqi)) + " · " + skyText(h.code);
+            + (h.aqi == null ? "" : ", AQI " + Math.round(h.aqi)) + " · " + skyText(h.code)
+            + (h.isGolden ? " · golden hour" : "") + (h.isSunset ? " · sunset " + clock(h.sun.set) : "")
+            + (h.isSunrise ? " · sunrise " + clock(h.sun.rise) : "");
           cell.setAttribute("aria-label", cell.title);
+          if (h.isGolden) cell.classList.add("golden");
           if (h.time === data.nowKey) cell.classList.add("now");
           else if (h.time < data.nowKey) cell.classList.add("past");
           cell.addEventListener("click", () => {
@@ -1249,7 +1313,14 @@
 
     const t = document.createElement("div");
     t.className = "time";
-    t.innerHTML = hourLabel(h.hour) + (h.time === data.nowKey ? "<small>now</small>" : (h.isDay ? "" : "<small>dark</small>"));
+    let sub = "";
+    if (h.time === data.nowKey) sub += "<small>now</small>";
+    if (h.isSunrise) sub += "<small>sunrise " + clock(h.sun.rise).replace(" ", "") + "</small>";
+    else if (h.isSunset) sub += "<small>sunset " + clock(h.sun.set).replace(" ", "") + "</small>";
+    else if (h.isGolden) sub += '<small class="golden">golden hour</small>';
+    else if (!h.isDay && h.time !== data.nowKey) sub += "<small>dark</small>";
+    t.innerHTML = hourLabel(h.hour) + sub;
+    if (h.isGolden) row.classList.add("golden");
     row.appendChild(t);
 
     const cond = document.createElement("div");

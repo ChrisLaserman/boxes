@@ -45,8 +45,8 @@ and the score picks one of five tiers:
 | ✕ Nope | under 42 | stay in |
 
 The number is where the nuance lives: a 73 and a 59 are both "OK", but only one of
-them is nearly good. Each tier carries its own glyph and word as well as its colour,
-so nothing depends on telling two greens apart.
+them is nearly good. The five colours run as a smooth green → lime → amber → orange
+→ red gradient, and each tier also carries its own glyph and word.
 
 ## What it rates
 
@@ -60,6 +60,16 @@ Each hour is scored on six factors, which combine into that overall number:
 | Rain | under 15% chance | 15–50% | over ~55%, or rain actually falling |
 | Cloud cover | depends on your sun preference | | |
 | Air quality (US AQI) | under ~75 | 75–135 | above ~135 — smoke or smog |
+
+## Sun times
+
+The forecast carries sunrise and sunset for each day, and golden hour is taken as
+the hour after sunrise and the hour before sunset. Those hours get a gold edge and
+a label in the hourly view, and a gold underline on the matching blocks in the week
+grid; the exact times sit under the current conditions and on each day's summary
+line. The approximation is deliberate — true golden hour depends on sun elevation
+and runs longer at these latitudes in midsummer — but within a few minutes it is
+the hour you actually want to be sitting outside.
 
 Every hour shows both temperatures: the feels-like reading, which the rating is
 built on, and the actual air temperature next to it. They part company whenever
@@ -76,7 +86,7 @@ and the hour is scored on the other five factors, so a bad air-quality response
 never costs you the forecast.
 
 The hour's score is a weighted blend (temp 30%, humidity 20%, wind 20%, rain 20%,
-air 12%, cloud 10%), and then one rule applies: **an hour can score no more than 18
+air 18%, cloud 10%), and then one rule applies: **an hour can score no more than 18
 points above its worst factor.**
 
 That single rule replaces what used to be three hard cliffs, and it's what keeps a
