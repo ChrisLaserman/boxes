@@ -31,14 +31,31 @@ Open `index.html` in a browser. That's the whole thing — one file, no build st
 no server, no API key, no account. Forecast data comes from
 [Open-Meteo](https://open-meteo.com/), which is free for personal use.
 
+## The scale
+
+Every hour gets a **score out of 100** — shown on its pill and beside the verdict —
+and the score picks one of five tiers:
+
+| Tier | Score | Means |
+| --- | --- | --- |
+| ★ Glorious | 88–100 | drop what you're doing |
+| ✓ Good | 74–87 | genuinely nice out |
+| ~ OK | 58–73 | perfectly sittable, nothing special |
+| ! Meh | 42–57 | you'd manage, but you wouldn't linger |
+| ✕ Nope | under 42 | stay in |
+
+The number is where the nuance lives: a 73 and a 59 are both "OK", but only one of
+them is nearly good. Each tier carries its own glyph and word as well as its colour,
+so nothing depends on telling two greens apart.
+
 ## What it rates
 
-Each hour gets a rating for five factors, plus one overall verdict:
+Each hour is scored on six factors, which combine into that overall number:
 
-| Factor | Green | Yellow | Red |
+| Factor | Scores well | Middling | Scores badly |
 | --- | --- | --- | --- |
-| Temperature (feels-like) | 64–78 °F | ~55–64 / 78–86 °F | below ~50 or above ~90 °F |
-| Humidity (scored on dew point) | dew point under 60 °F | 60–68 °F | above ~70 °F — muggy |
+| Temperature (feels-like) | 62–80 °F | ~53–62 / 80–86 °F | below ~48 or above ~92 °F |
+| Humidity (scored on dew point) | dew point under 63 °F | 63–70 °F | above ~72 °F — muggy |
 | Wind | 0–10 mph, gusts under 18 | 10–18 mph, or gusty | over ~20 mph, or gusts over 30 |
 | Rain | under 15% chance | 15–50% | over ~55%, or rain actually falling |
 | Cloud cover | depends on your sun preference | | |
@@ -58,13 +75,15 @@ that's actually full of wildfire smoke. If that request fails the chip reads "�
 and the hour is scored on the other five factors, so a bad air-quality response
 never costs you the forecast.
 
-The overall hour rating is a weighted blend (temp 30%, humidity 20%, wind 20%,
-rain 20%, air 12%, cloud 10%) with two overrides:
+The hour's score is a weighted blend (temp 30%, humidity 20%, wind 20%, rain 20%,
+air 12%, cloud 10%), and then one rule applies: **an hour can score no more than 18
+points above its worst factor.**
 
-- An hour is green only when **every** factor is green. One yellow factor keeps
-  the hour at yellow.
-- One genuinely bad factor — thunderstorms, 25 mph wind, 95 °F, air above AQI 160
-  — makes the whole hour red regardless of how good everything else looks.
+That single rule replaces what used to be three hard cliffs, and it's what keeps a
+lovely afternoon from being demoted over one imperfect number. A thunderstorm
+scores about 5, so the hour lands at 23 — Nope — no matter how pleasant the
+temperature is. An afternoon that's merely a bit muggy scores 65 on humidity, so
+the hour can still reach 83 and read Good.
 
 After dark, cloud cover stops counting toward the score.
 

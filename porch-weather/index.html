@@ -16,11 +16,15 @@
     --hairline:       #e1e0d9;
     --ring:           rgba(11,11,11,0.10);
     --shadow:         0 1px 2px rgba(11,11,11,0.05), 0 8px 24px rgba(11,11,11,0.05);
+    --glorious:       #0a7d24;
     --good:           #0ca30c;
     --ok:             #fab219;
+    --meh:            #ec835a;
     --bad:            #d03b3b;
+    --glorious-ink:   #06581a;
     --good-ink:       #006300;
     --ok-ink:         #8a5a00;
+    --meh-ink:        #a3502a;
     --bad-ink:        #a52626;
     --tint:           22%;
     --radius:         14px;
@@ -36,8 +40,10 @@
       --hairline:     #2c2c2a;
       --ring:         rgba(255,255,255,0.10);
       --shadow:       0 1px 2px rgba(0,0,0,0.4), 0 8px 24px rgba(0,0,0,0.35);
+      --glorious-ink: #35c454;
       --good-ink:     #4dc44d;
       --ok-ink:       #fab219;
+      --meh-ink:      #f0a07c;
       --bad-ink:      #ef6a6a;
       --tint:         26%;
     }
@@ -149,6 +155,7 @@
   }
   .verdict .mark { font-size: 26px; line-height: 1; color: var(--ci); }
   .verdict .txt strong { display: block; font-size: 19px; letter-spacing: -0.01em; }
+  .verdict .txt strong .score { font-size: 13px; font-weight: 600; color: var(--ink-muted); margin-left: 9px; letter-spacing: 0; }
   .verdict .txt span { color: var(--ink-2); font-size: 13.5px; }
   .stats { display: flex; gap: 22px; flex-wrap: wrap; }
   .stat .label { font-size: 12px; color: var(--ink-muted); text-transform: uppercase; letter-spacing: 0.04em; }
@@ -156,10 +163,12 @@
   .stat .value .ic { color: var(--ink-2); vertical-align: -3px; margin-right: 2px; }
   .ic { flex: none; }
 
-  [data-r="good"] { --c: var(--good); --ci: var(--good-ink); }
-  [data-r="ok"]   { --c: var(--ok);   --ci: var(--ok-ink); }
-  [data-r="bad"]  { --c: var(--bad);  --ci: var(--bad-ink); }
-  [data-r="none"] { --c: var(--ink-muted); --ci: var(--ink-muted); }
+  [data-r="glorious"] { --c: var(--glorious); --ci: var(--glorious-ink); }
+  [data-r="good"]     { --c: var(--good); --ci: var(--good-ink); }
+  [data-r="ok"]       { --c: var(--ok);   --ci: var(--ok-ink); }
+  [data-r="meh"]      { --c: var(--meh);  --ci: var(--meh-ink); }
+  [data-r="bad"]      { --c: var(--bad);  --ci: var(--bad-ink); }
+  [data-r="none"]     { --c: var(--ink-muted); --ci: var(--ink-muted); }
 
   /* ---------- day tabs ---------- */
   .tabs { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 12px; }
@@ -219,7 +228,7 @@
   .hours { display: grid; gap: 6px; }
   .hour {
     display: grid;
-    grid-template-columns: 66px 24px 106px 1fr;
+    grid-template-columns: 66px 24px 134px 1fr;
     gap: 10px; align-items: center;
     padding: 9px 12px;
     border: 1px solid var(--ring);
@@ -239,6 +248,8 @@
     white-space: nowrap;
   }
   .pill .mark { font-size: 13px; }
+  .pill .score { margin-left: auto; padding-left: 8px; font-weight: 600; opacity: 0.62; font-variant-numeric: tabular-nums; }
+  .hour .pill { width: 100%; justify-content: flex-start; }
   .chips { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 5px; }
   .chip {
     display: flex; align-items: center; gap: 5px; min-width: 0;
@@ -258,7 +269,7 @@
 
   @media (max-width: 680px) {
     .hour { grid-template-columns: 66px 24px 1fr; gap: 10px; }
-    .hour .pill { justify-self: start; }
+    .hour .pill { justify-self: start; width: auto; min-width: 126px; }
     .hour .chips { grid-column: 1 / -1; grid-template-columns: repeat(2, minmax(0, 1fr)); }
   }
 
@@ -434,19 +445,24 @@
 
       <h2 style="margin-top:22px">Legend</h2>
       <div class="legend">
-        <span class="item" data-r="good"><span class="sw"></span>✓ Green — go sit outside</span>
-        <span class="item" data-r="ok"><span class="sw"></span>~ Yellow — workable, with a caveat</span>
-        <span class="item" data-r="bad"><span class="sw"></span>✕ Red — stay in</span>
+        <span class="item" data-r="glorious"><span class="sw"></span>★ Glorious — 88+</span>
+        <span class="item" data-r="good"><span class="sw"></span>✓ Good — 74–87</span>
+        <span class="item" data-r="ok"><span class="sw"></span>~ OK — 58–73</span>
+        <span class="item" data-r="meh"><span class="sw"></span>! Meh — 42–57</span>
+        <span class="item" data-r="bad"><span class="sw"></span>✕ Nope — under 42</span>
       </div>
+      <p class="note">Every hour gets a score out of 100 — shown on its pill, and beside the
+      verdict up top — and the score picks the tier. The number is the nuance: a 73 and a 59
+      are both "OK", but only one of them is nearly good.</p>
 
       <p class="note">Each hour shows both readings: the feels-like temperature, which is what the
       rating is built on, and the actual air temperature beside it. They differ when wind chill or
       humidity is doing something to the air.</p>
       <table class="rules">
-        <thead><tr><th>Factor</th><th>Green</th><th>Yellow</th><th>Red</th><th>Weight</th></tr></thead>
+        <thead><tr><th>Factor</th><th>Scores well</th><th>Middling</th><th>Scores badly</th><th>Weight</th></tr></thead>
         <tbody>
-          <tr><td>Temperature (feels-like)</td><td>64–78 °F</td><td>~55–64 / 78–86 °F</td><td>below ~50 or above ~90 °F</td><td>30%</td></tr>
-          <tr><td>Humidity (by dew point)</td><td>dew pt under 60 °F</td><td>60–68 °F</td><td>above ~70 °F — muggy</td><td>20%</td></tr>
+          <tr><td>Temperature (feels-like)</td><td>62–80 °F</td><td>~53–62 / 80–86 °F</td><td>below ~48 or above ~92 °F</td><td>30%</td></tr>
+          <tr><td>Humidity (by dew point)</td><td>dew pt under 63 °F</td><td>63–70 °F</td><td>above ~72 °F — muggy</td><td>20%</td></tr>
           <tr><td>Wind</td><td>0–10 mph, gusts under 18</td><td>10–18 mph or gusty</td><td>over ~20 mph or gusts over 30</td><td>20%</td></tr>
           <tr><td>Rain</td><td>under 15% chance</td><td>15–50%</td><td>over ~55% or measurable rain</td><td>20%</td></tr>
           <tr><td>Cloud cover</td><td>depends on your sun preference</td><td>–</td><td>–</td><td>10%</td></tr>
@@ -456,7 +472,12 @@
       <p class="note" style="margin-top:14px">Each hour carries an icon for what the sky is doing — sun, moon, cloud, fog, drizzle, rain, snow, thunderstorm — and the five chips are keyed to their factor: thermometer, droplet (humidity), wind, rain, cloud, haze (air quality). In the week grid, a block picks up a small marker when rain, snow or a thunderstorm is expected, or when air quality, wind or humidity is the thing ruining that hour. Air quality
       comes from Open-Meteo's air-quality service as the US AQI; if that request fails the
       chip reads "—" and the hour is scored on the other five factors.</p>
-      <p class="note">An hour is green only when <em>every</em> factor is green — one yellow factor keeps it at yellow, and one red factor does too. Something genuinely bad (a thunderstorm, 25&nbsp;mph wind, 95&nbsp;°F, air above AQI&nbsp;160) turns the whole hour red no matter how good everything else looks. Comfort bands shift a few degrees with your temperature setting, and after dark cloud cover stops counting.</p>
+      <p class="note">The score is a weighted blend of the six factors, and then one rule
+      applies: <strong>an hour can score no more than 18 points above its worst factor</strong>.
+      So a thunderstorm (which scores about 5) drags the hour to 23 — Nope — however pleasant
+      the temperature is, while an afternoon that's merely a bit muggy (65) can still reach 83
+      and read Good. Comfort bands shift a few degrees with your temperature setting, and after
+      dark cloud cover stops counting.</p>
     </details>
   </section>
 
@@ -521,11 +542,28 @@
      unit toggle is purely a display concern.
      score 70-100 = green, 40-69 = yellow, 0-39 = red
   --------------------------------------------------------------- */
-  const GREEN = 70, YELLOW = 40;
+  // Five tiers for the hour as a whole. Each carries its own glyph and word, so
+  // the reading never rests on the colour.
+  const TIERS = [
+    { key: "glorious", min: 88, mark: "★", word: "Glorious" },
+    { key: "good",     min: 74, mark: "✓", word: "Good" },
+    { key: "ok",       min: 58, mark: "~", word: "OK" },
+    { key: "meh",      min: 42, mark: "!", word: "Meh" },
+    { key: "bad",      min: 0,  mark: "✕", word: "Nope" }
+  ];
+  function ratingOf(score) {
+    for (let i = 0; i < TIERS.length; i++) if (score >= TIERS[i].min) return TIERS[i].key;
+    return "bad";
+  }
+  const betterThanOK = r => r === "glorious" || r === "good";
 
-  function ratingOf(score) { return score >= GREEN ? "good" : score >= YELLOW ? "ok" : "bad"; }
-  const MARK = { good: "✓", ok: "~", bad: "✕", none: "–" };
-  const WORD = { good: "Great", ok: "So-so", bad: "Rough", none: "—" };
+  // The individual factors stay on three states — they are supporting detail,
+  // and five colours per chip would drown the hour's own verdict.
+  const GREEN = 70, YELLOW = 45;
+  function factorRating(score) { return score >= GREEN ? "good" : score >= YELLOW ? "ok" : "bad"; }
+
+  const MARK = { none: "–" }, WORD = { none: "—" };
+  TIERS.forEach(t => { MARK[t.key] = t.mark; WORD[t.key] = t.word; });
 
   // piecewise-linear interpolation over [[x, score], ...] ascending in x
   function ramp(x, pts) {
@@ -544,29 +582,29 @@
 
   function scoreTemp(feels) {
     const shift = tempShift();
-    const lo = 64 + shift, hi = 78 + shift;
+    const lo = 62 + shift, hi = 80 + shift;
     if (feels >= lo && feels <= hi) return { score: 100, note: "comfortable" };
     if (feels < lo) {
-      const s = clamp(100 - (lo - feels) * 3.6, 0, 100);
+      const s = clamp(100 - (lo - feels) * 3.2, 0, 100);
       return { score: s, note: s >= GREEN ? "a touch cool" : s >= YELLOW ? "chilly — bring a layer" : "too cold" };
     }
-    const s = clamp(100 - (feels - hi) * 5.4, 0, 100);
+    const s = clamp(100 - (feels - hi) * 4.8, 0, 100);
     return { score: s, note: s >= GREEN ? "a touch warm" : s >= YELLOW ? "hot" : "too hot" };
   }
 
   function scoreHumidity(dew, rh) {
-    let s = ramp(dew, [[45, 100], [58, 100], [62, 84], [66, 66], [70, 44], [74, 20], [80, 4]]);
+    let s = ramp(dew, [[45, 100], [60, 100], [64, 86], [68, 68], [72, 46], [76, 22], [82, 4]]);
     if (rh >= 92) s -= 10;                       // clammy even when cool
     s = clamp(s, 0, 100);
-    const note = dew < 58 ? "dry and pleasant"
-      : dew < 63 ? "slightly sticky"
-      : dew < 68 ? "noticeably humid"
-      : dew < 73 ? "muggy" : "oppressive";
+    const note = dew < 61 ? "dry and pleasant"
+      : dew < 65 ? "slightly sticky"
+      : dew < 69 ? "noticeably humid"
+      : dew < 74 ? "muggy" : "oppressive";
     return { score: s, note: note };
   }
 
   function scoreWind(mph, gust) {
-    let s = ramp(mph, [[0, 88], [3, 96], [6, 100], [10, 88], [14, 70], [18, 50], [23, 28], [30, 8], [40, 0]]);
+    let s = ramp(mph, [[0, 90], [3, 97], [6, 100], [10, 92], [14, 76], [18, 56], [23, 32], [30, 10], [40, 0]]);
     if (gust >= 30) s = Math.min(s, 28);         // things blow off the table
     else if (gust >= 22) s = Math.min(s, 55);
     s = clamp(s, 0, 100);
@@ -599,7 +637,7 @@
       s = ramp(pct, [[0, 38], [20, 52], [45, 76], [70, 94], [100, 100]]);
       note = pct < 25 ? "bright sun" : pct < 60 ? "partly cloudy" : pct < 88 ? "nicely shaded" : "overcast";
     } else {
-      s = ramp(pct, [[0, 86], [12, 94], [25, 100], [70, 100], [88, 82], [100, 68]]);
+      s = ramp(pct, [[0, 90], [12, 96], [25, 100], [70, 100], [88, 84], [100, 72]]);
       note = pct < 12 ? "clear" : pct < 40 ? "mostly sunny" : pct < 70 ? "partly cloudy" : pct < 88 ? "mostly cloudy" : "overcast";
     }
     return { score: clamp(s, 0, 100), note: note };
@@ -639,14 +677,16 @@
     }
     let overall = weight ? total / weight : 0;
 
-    // A single dealbreaker outranks a good average.
+    // A single bad factor still outranks a flattering average, but it drags the
+    // hour down in proportion to how bad it is rather than off a cliff: an hour
+    // can sit no more than 18 points above its worst factor. A thunderstorm
+    // (score ~5) lands at 23 and is Nope; a slightly muggy afternoon (65) can
+    // still reach 83 and read Good.
     const scores = Object.keys(WEIGHTS).filter(k => !f[k].neutral).map(k => f[k].score);
     const worst = Math.min.apply(null, scores);
-    if (worst < 20) overall = Math.min(overall, 34);        // dealbreaker: the hour is red
-    else if (worst < YELLOW) overall = Math.min(overall, 62); // one red factor caps the hour at yellow
-    else if (worst < GREEN) overall = Math.min(overall, 69);  // green means every factor is green
+    overall = Math.min(overall, worst + 18);
 
-    for (const k in f) f[k].rating = ratingOf(f[k].score);
+    for (const k in f) f[k].rating = factorRating(f[k].score);
     return { factors: f, score: overall, rating: ratingOf(overall) };
   }
 
@@ -851,14 +891,16 @@
   // Longest run of green hours (falls back to yellow) inside a day.
   function bestWindow(day, fromNow) {
     const hs = visibleHours(day, fromNow);
-    for (const target of ["good", "ok"]) {
+    const targets = [betterThanOK, r => r === "ok"];
+    for (let t = 0; t < targets.length; t++) {
+      const matches = targets[t];
       let best = null, run = null;
       for (let i = 0; i <= hs.length; i++) {
-        const ok = i < hs.length && hs[i].rating === target && hs[i].hour >= 6 && hs[i].hour <= 23;
+        const ok = i < hs.length && matches(hs[i].rating) && hs[i].hour >= 6 && hs[i].hour <= 23;
         if (ok) { if (!run) run = { start: hs[i], end: hs[i], n: 0 }; run.end = hs[i]; run.n++; }
         else if (run) { if (!best || run.n > best.n) best = run; run = null; }
       }
-      if (best) return { run: best, rating: target };
+      if (best) return { run: best, rating: t === 0 ? "good" : "ok" };
     }
     return null;
   }
@@ -867,7 +909,7 @@
     const f = h.factors;
     const bad = Object.keys(WEIGHTS).filter(k => !f[k].neutral && f[k].rating === "bad");
     const meh = Object.keys(WEIGHTS).filter(k => !f[k].neutral && f[k].rating === "ok");
-    if (h.rating === "good") {
+    if (betterThanOK(h.rating)) {
       return cap(f.temp.note) + ", " + f.humidity.note + ", " + f.wind.note + ".";
     }
     const list = (bad.length ? bad : meh).map(k => f[k].note);
@@ -983,8 +1025,15 @@
     }
     v.dataset.r = h.rating;
     $("nowMark").textContent = MARK[h.rating];
-    $("nowLabel").textContent = h.rating === "good" ? "Good porch weather"
-      : h.rating === "ok" ? "Passable — with a caveat" : "Not porch weather";
+    const HEADLINE = {
+      glorious: "Glorious — go sit outside",
+      good: "Good porch weather",
+      ok: "Perfectly sittable",
+      meh: "You'd manage",
+      bad: "Not porch weather"
+    };
+    $("nowLabel").innerHTML = (HEADLINE[h.rating] || "—")
+      + '<span class="score">' + Math.round(h.score) + "/100</span>";
     $("nowWhy").textContent = whyLine(h);
     $("nowTemp").innerHTML = icon("thermo", 18) + " " + temp(h.feels);
     $("nowAirTemp").innerHTML = icon("thermo", 18) + " " + temp(h.temp);
@@ -1002,7 +1051,7 @@
       const end = hourLabel((bw.run.end.hour + 1) % 24);
       el.innerHTML = "<strong>Best stretch left today:</strong> " + start + " – " + end
         + " (" + bw.run.n + (bw.run.n === 1 ? " hour" : " hours") + ", "
-        + (bw.rating === "good" ? "green" : "yellow — nothing green left today") + ").";
+        + (bw.rating === "good" ? "good or better" : "only OK — nothing better left today") + ").";
     } else {
       el.innerHTML = "<strong>Best stretch left today:</strong> nothing worth sitting out for — check tomorrow.";
     }
@@ -1058,11 +1107,14 @@
 
     // summary
     const shown = visibleHours(day, activeDay === 0);
-    const counts = { good: 0, ok: 0, bad: 0 };
+    const counts = { glorious: 0, good: 0, ok: 0, meh: 0, bad: 0 };
     shown.forEach(h => counts[h.rating]++);
     const bw = bestWindow(day, activeDay === 0);
-    let summary = counts.good + " green, " + counts.ok + " yellow, " + counts.bad + " red"
-      + (activeDay === 0 ? " in the hours left today" : " between 6 AM and 11 PM") + ".";
+    const goodish = counts.glorious + counts.good;
+    let summary = goodish + " hours good or better"
+      + (counts.glorious ? " (" + counts.glorious + " glorious)" : "")
+      + ", " + counts.ok + " OK, " + (counts.meh + counts.bad) + " not worth it"
+      + (activeDay === 0 ? ", in the hours left today" : ", between 6 AM and 11 PM") + ".";
     if (bw && activeDay !== 0) {
       summary += " Best stretch: " + hourLabel(bw.run.start.hour) + " – " + hourLabel((bw.run.end.hour + 1) % 24) + ".";
     }
@@ -1082,8 +1134,12 @@
   }
 
   // green hours left in a day (today counts only the hours still ahead)
-  function greenCount(day, i) {
-    return visibleHours(day, i === 0).filter(h => h.rating === "good").length;
+  function goodCount(day, i) {
+    const hs = visibleHours(day, i === 0);
+    return {
+      good: hs.filter(h => betterThanOK(h.rating)).length,
+      glorious: hs.filter(h => h.rating === "glorious").length
+    };
   }
 
   function renderWeek() {
@@ -1107,7 +1163,7 @@
     data.days.forEach((day, i) => {
       const byHour = {};
       day.hours.forEach(h => byHour[h.hour] = h);
-      const green = greenCount(day, i);
+      const count = goodCount(day, i);
 
       const label = document.createElement("div");
       label.className = "wk-day";
@@ -1121,7 +1177,9 @@
       });
       const n = document.createElement("div"); n.className = "n"; n.appendChild(jump);
       const c = document.createElement("div"); c.className = "c";
-      c.textContent = green === 0 ? "no green hours" : green + (green === 1 ? " green hour" : " green hours");
+      c.textContent = count.good === 0 ? "nothing good"
+        : count.good + (count.good === 1 ? " good hour" : " good hours")
+          + (count.glorious ? ", " + count.glorious + " glorious" : "");
       label.appendChild(n); label.appendChild(c);
       grid.appendChild(label);
 
@@ -1165,7 +1223,8 @@
     let best = null;
     data.days.forEach((day, i) => {
       const bw = bestWindow(day, i === 0);
-      const score = greenCount(day, i) * 10 + (bw && bw.rating === "good" ? bw.run.n : 0);
+      const c = goodCount(day, i);
+      const score = c.good * 10 + c.glorious * 4 + (bw && bw.rating === "good" ? bw.run.n : 0);
       if (bw && bw.rating === "good" && (!best || score > best.score)) best = { i: i, day: day, bw: bw, score: score };
     });
     const lead = $("weekLead"), sum = $("weekSummary");
@@ -1174,11 +1233,11 @@
       const name = dayName(best.day.date, best.i, false);
       lead.textContent = "Pick of the week: " + name;
       sum.innerHTML = "<strong>Best bet this week:</strong> " + name + ", " + when
-        + " — " + best.bw.run.n + (best.bw.run.n === 1 ? " green hour" : " straight green hours")
+        + " — " + best.bw.run.n + (best.bw.run.n === 1 ? " good hour" : " straight good hours")
         + ". Tap any block for that day's detail.";
     } else {
       lead.textContent = "";
-      sum.innerHTML = "<strong>Nothing green in the next 7 days</strong> — the yellow blocks are your best shot. Tap any block for that day's detail.";
+      sum.innerHTML = "<strong>Nothing good in the next 7 days</strong> — the OK blocks are your best shot. Tap any block for that day's detail.";
     }
   }
 
@@ -1205,7 +1264,9 @@
     const pill = document.createElement("div");
     pill.className = "pill";
     pill.dataset.r = h.rating;
-    pill.innerHTML = '<span class="mark" aria-hidden="true">' + MARK[h.rating] + "</span>" + WORD[h.rating];
+    pill.innerHTML = '<span class="mark" aria-hidden="true">' + MARK[h.rating] + "</span>" + WORD[h.rating]
+      + '<span class="score">' + Math.round(h.score) + "</span>";
+    pill.title = WORD[h.rating] + " — scores " + Math.round(h.score) + " out of 100";
     row.appendChild(pill);
 
     const chips = document.createElement("div");
