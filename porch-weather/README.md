@@ -117,7 +117,7 @@ it's honest decoration — it always matches the hour the dashboard is showing.
   a glance (past hours dimmed, current hour outlined); click a block to jump to
   that row.
 - **Week** — all seven days as one grid: a row per day, a column per hour, with the
-  count of green hours beside each day and a "best bet this week" callout. Tap any
+  count of glorious hours beside each day and a "best bet this week" callout. Tap any
   block to drop into that day's hour-by-hour detail.
 - **Settings** — sun preference (some people want sun on the porch, some want
   shade), whether you run hot or cold, °F/°C, and whether to show the overnight

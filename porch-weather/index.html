@@ -1177,9 +1177,8 @@
       });
       const n = document.createElement("div"); n.className = "n"; n.appendChild(jump);
       const c = document.createElement("div"); c.className = "c";
-      c.textContent = count.good === 0 ? "nothing good"
-        : count.good + (count.good === 1 ? " good hour" : " good hours")
-          + (count.glorious ? ", " + count.glorious + " glorious" : "");
+      c.textContent = count.glorious === 0 ? "no glorious hours"
+        : count.glorious + (count.glorious === 1 ? " glorious hour" : " glorious hours");
       label.appendChild(n); label.appendChild(c);
       grid.appendChild(label);
 
