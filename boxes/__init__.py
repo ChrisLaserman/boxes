@@ -38,7 +38,7 @@ from boxes.drawing import Context
 from shapely.geometry import *
 from shapely.ops import split
 
-from boxes import edges, formats, gears, parts, pulley
+from boxes import edges, formats, gears, machine_profile, parts, pulley
 from boxes.Color import Color, RGB
 from boxes.qrcode_factory import BoxesQrCodeFactory
 from boxes.vectors import kerf
@@ -630,6 +630,8 @@ class Boxes:
             s = s.replace('\r', '')
             s = s.replace('\n', "\\n")
             return quote(s)
+
+        machine_profile.apply_defaults(self.argparser)
 
         self.metadata["cli"] = "boxes " + self.__class__.__name__ + " " + " ".join(cliQuote(arg) for arg in args)
         self.metadata["cli"] = self.metadata["cli"].strip()

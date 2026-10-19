@@ -1,0 +1,65 @@
+#!/usr/bin/env python3
+"""Turn LaserCalibration measurements into machine profile settings.
+
+Example:
+
+    scripts/calibrate --square 39.82 --hole 40.18 --notch 2.85
+
+--square  measured size of the square that dropped out of the kerf coupon
+--hole    measured size of the hole it left (optional, improves accuracy)
+--notch   label of the tightest gauge notch your sheet still slides into
+"""
+from __future__ import annotations
+
+import argparse
+import re
+import sys
+from pathlib import Path
+
+try:
+    import boxes
+except ImportError:
+    sys.path.append(str(Path(__file__).resolve().parent.parent))
+    import boxes
+
+from boxes import machine_profile
+
+
+def main() -> None:
+    parser = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
+    parser.add_argument("--nominal", type=float, default=40.0, help="nominal coupon size (the --square used when cutting)")
+    parser.add_argument("--square", type=float, required=True, help="measured square in mm")
+    parser.add_argument("--hole", type=float, help="measured hole in mm")
+    parser.add_argument("--notch", type=float, required=True, help="label of tightest notch that fits")
+    parser.add_argument("--profile", type=Path, default=machine_profile.DEFAULT_PATH, help="profile to update")
+    parser.add_argument("--dry-run", action="store_true", help="only print the results")
+    args = parser.parse_args()
+
+    if args.hole is not None:
+        kerf = (args.hole - args.square) / 2
+    else:
+        kerf = args.nominal - args.square
+    if not 0 < kerf < 1:
+        sys.exit(f"kerf of {kerf:.3f} mm is implausible, check the measurements")
+
+    burn = kerf / 2
+    thickness = args.notch + kerf
+
+    print(f"kerf:      {kerf:.3f} mm")
+    print(f"burn:      {burn:.3f} mm")
+    print(f"thickness: {thickness:.2f} mm")
+
+    if args.dry_run:
+        return
+
+    text = args.profile.read_text()
+    for key, value in (("thickness", f"{thickness:.2f}"), ("burn", f"{burn:.3f}")):
+        text, n = re.subn(rf"^(\s+{key}:)\s*[0-9.]+", rf"\g<1> {value}", text, count=1, flags=re.M)
+        if n != 1:
+            sys.exit(f"could not find '{key}:' in {args.profile}")
+    args.profile.write_text(text)
+    print(f"updated {args.profile}")
+
+
+if __name__ == "__main__":
+    main()

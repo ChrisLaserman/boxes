@@ -227,6 +227,7 @@ class BServer:
         return self.args2html(name, box, lang, action, defaults)
 
     def args2html(self, name, box, lang, action="", defaults={}):
+        boxes.machine_profile.apply_defaults(box.argparser)
         _ = lang.gettext
         lang_name = lang.info().get('language', None)
 

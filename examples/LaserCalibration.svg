@@ -1,0 +1,90 @@
+<?xml version='1.0' encoding='utf-8'?>
+<svg height="91.70mm" viewBox="0.0 0.0 274.60 91.70" width="274.60mm" xmlns="http://www.w3.org/2000/svg" xmlns:cc="http://creativecommons.org/ns#" xmlns:dc="http://purl.org/dc/elements/1.1/" xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape" xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#" xmlns:svg="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
+<!--
+LaserCalibration - Measure kerf and effective material thickness in one cut
+
+
+Everything on this sheet is drawn at its nominal size with
+no burn correction, whatever burn is set to.
+
+**Kerf coupon:** a square hole of known size. Measure the square that drops
+out and the hole it leaves with calipers. The square shrinks and the hole
+grows by one kerf, so kerf = (hole - square) / 2 and the burn setting to use
+is half of that.
+
+**Thickness gauge:** a comb of notches labelled with their drawn width.
+Slide a scrap of your sheet into them and note the label of the tightest
+notch it still goes into. The real slot width is the label plus one kerf.
+
+Feed both results into `scripts/calibrate` to write them into
+machine_profile.yaml.
+
+
+
+Created with Boxes.py (https://boxes.hackerspace-bamberg.de/)
+Command line (remove spaces between dashes): boxes LaserCalibration
+-->
+<title>LaserCalibration</title>
+<metadata>
+<rdf:RDF><cc:Work>
+<dc:title>Part - LaserCalibration</dc:title>
+<dc:source>boxes LaserCalibration</dc:source>
+<dc:description>Measure kerf and effective material thickness in one cut
+
+Everything on this sheet is drawn at its nominal size with
+no burn correction, whatever burn is set to.
+
+**Kerf coupon:** a square hole of known size. Measure the square that drops
+out and the hole it leaves with calipers. The square shrinks and the hole
+grows by one kerf, so kerf = (hole - square) / 2 and the burn setting to use
+is half of that.
+
+**Thickness gauge:** a comb of notches labelled with their drawn width.
+Slide a scrap of your sheet into them and note the label of the tightest
+notch it still goes into. The real slot width is the label plus one kerf.
+
+Feed both results into `scripts/calibrate` to write them into
+machine_profile.yaml.
+
+
+Created with Boxes.py (https://boxes.hackerspace-bamberg.de/)
+Command line: boxes LaserCalibration
+Command line short: boxes LaserCalibration
+</dc:description>
+</cc:Work></rdf:RDF></metadata>
+<g id="p-0" style="fill:none;stroke-linecap:round;stroke-linejoin:round;">
+  <path d="M 10.000 81.700 H 110.000 V 71.700 H 10.000 V 81.700 Z" stroke="rgb(0,0,0)" stroke-width="0.20" />
+  <text dominant-baseline="hanging" font-size="6px" style="font-family: sans-serif ; font-weight: normal; font-style: normal; fill: rgb(255,0,0)" text-anchor="middle" transform="matrix( 1.000 0.000 0.000 1.000 60.000 73.700 )">100.0mm, burn:0.10mm</text>
+</g>
+<g id="p-1" style="fill:none;stroke-linecap:round;stroke-linejoin:round;">
+  <text dominant-baseline="hanging" font-size="3px" style="font-family: sans-serif ; font-weight: normal; font-style: normal; fill: rgb(0,255,0)" text-anchor="middle" transform="matrix( 1.000 0.000 0.000 1.000 40.000 63.000 )">kerf coupon 40.0 mm</text>
+  <text dominant-baseline="hanging" font-size="3px" style="font-family: sans-serif ; font-weight: normal; font-style: normal; fill: rgb(0,255,0)" text-anchor="middle" transform="matrix( 1.000 0.000 0.000 1.000 40.000 14.000 )">measure square and hole</text>
+  <path d="M 40.000 60.000 H 20.000 V 20.000 H 60.000 V 60.000 H 40.000 Z" stroke="rgb(0,0,255)" stroke-width="0.20" />
+  <path d="M 10.000 70.000 H 70.000 V 10.000 H 10.000 V 70.000 Z" stroke="rgb(0,0,0)" stroke-width="0.20" />
+</g>
+<g id="p-2" style="fill:none;stroke-linecap:round;stroke-linejoin:round;">
+  <text dominant-baseline="hanging" font-size="2.5px" style="font-family: sans-serif ; font-weight: normal; font-style: normal; fill: rgb(0,255,0)" text-anchor="middle" transform="matrix( 1.000 0.000 0.000 1.000 257.400 58.500 )">2.40</text>
+  <text dominant-baseline="hanging" font-size="2.5px" style="font-family: sans-serif ; font-weight: normal; font-style: normal; fill: rgb(0,255,0)" text-anchor="middle" transform="matrix( 1.000 0.000 0.000 1.000 248.975 58.500 )">2.45</text>
+  <text dominant-baseline="hanging" font-size="2.5px" style="font-family: sans-serif ; font-weight: normal; font-style: normal; fill: rgb(0,255,0)" text-anchor="middle" transform="matrix( 1.000 0.000 0.000 1.000 240.500 58.500 )">2.50</text>
+  <text dominant-baseline="hanging" font-size="2.5px" style="font-family: sans-serif ; font-weight: normal; font-style: normal; fill: rgb(0,255,0)" text-anchor="middle" transform="matrix( 1.000 0.000 0.000 1.000 231.975 58.500 )">2.55</text>
+  <text dominant-baseline="hanging" font-size="2.5px" style="font-family: sans-serif ; font-weight: normal; font-style: normal; fill: rgb(0,255,0)" text-anchor="middle" transform="matrix( 1.000 0.000 0.000 1.000 223.400 58.500 )">2.60</text>
+  <text dominant-baseline="hanging" font-size="2.5px" style="font-family: sans-serif ; font-weight: normal; font-style: normal; fill: rgb(0,255,0)" text-anchor="middle" transform="matrix( 1.000 0.000 0.000 1.000 214.775 58.500 )">2.65</text>
+  <text dominant-baseline="hanging" font-size="2.5px" style="font-family: sans-serif ; font-weight: normal; font-style: normal; fill: rgb(0,255,0)" text-anchor="middle" transform="matrix( 1.000 0.000 0.000 1.000 206.100 58.500 )">2.70</text>
+  <text dominant-baseline="hanging" font-size="2.5px" style="font-family: sans-serif ; font-weight: normal; font-style: normal; fill: rgb(0,255,0)" text-anchor="middle" transform="matrix( 1.000 0.000 0.000 1.000 197.375 58.500 )">2.75</text>
+  <text dominant-baseline="hanging" font-size="2.5px" style="font-family: sans-serif ; font-weight: normal; font-style: normal; fill: rgb(0,255,0)" text-anchor="middle" transform="matrix( 1.000 0.000 0.000 1.000 188.600 58.500 )">2.80</text>
+  <text dominant-baseline="hanging" font-size="2.5px" style="font-family: sans-serif ; font-weight: normal; font-style: normal; fill: rgb(0,255,0)" text-anchor="middle" transform="matrix( 1.000 0.000 0.000 1.000 179.775 58.500 )">2.85</text>
+  <text dominant-baseline="hanging" font-size="2.5px" style="font-family: sans-serif ; font-weight: normal; font-style: normal; fill: rgb(0,255,0)" text-anchor="middle" transform="matrix( 1.000 0.000 0.000 1.000 170.900 58.500 )">2.90</text>
+  <text dominant-baseline="hanging" font-size="2.5px" style="font-family: sans-serif ; font-weight: normal; font-style: normal; fill: rgb(0,255,0)" text-anchor="middle" transform="matrix( 1.000 0.000 0.000 1.000 161.975 58.500 )">2.95</text>
+  <text dominant-baseline="hanging" font-size="2.5px" style="font-family: sans-serif ; font-weight: normal; font-style: normal; fill: rgb(0,255,0)" text-anchor="middle" transform="matrix( 1.000 0.000 0.000 1.000 153.000 58.500 )">3.00</text>
+  <text dominant-baseline="hanging" font-size="2.5px" style="font-family: sans-serif ; font-weight: normal; font-style: normal; fill: rgb(0,255,0)" text-anchor="middle" transform="matrix( 1.000 0.000 0.000 1.000 143.975 58.500 )">3.05</text>
+  <text dominant-baseline="hanging" font-size="2.5px" style="font-family: sans-serif ; font-weight: normal; font-style: normal; fill: rgb(0,255,0)" text-anchor="middle" transform="matrix( 1.000 0.000 0.000 1.000 134.900 58.500 )">3.10</text>
+  <text dominant-baseline="hanging" font-size="2.5px" style="font-family: sans-serif ; font-weight: normal; font-style: normal; fill: rgb(0,255,0)" text-anchor="middle" transform="matrix( 1.000 0.000 0.000 1.000 125.775 58.500 )">3.15</text>
+  <text dominant-baseline="hanging" font-size="2.5px" style="font-family: sans-serif ; font-weight: normal; font-style: normal; fill: rgb(0,255,0)" text-anchor="middle" transform="matrix( 1.000 0.000 0.000 1.000 116.600 58.500 )">3.20</text>
+  <text dominant-baseline="hanging" font-size="2.5px" style="font-family: sans-serif ; font-weight: normal; font-style: normal; fill: rgb(0,255,0)" text-anchor="middle" transform="matrix( 1.000 0.000 0.000 1.000 107.375 58.500 )">3.25</text>
+  <text dominant-baseline="hanging" font-size="2.5px" style="font-family: sans-serif ; font-weight: normal; font-style: normal; fill: rgb(0,255,0)" text-anchor="middle" transform="matrix( 1.000 0.000 0.000 1.000 98.100 58.500 )">3.30</text>
+  <text dominant-baseline="hanging" font-size="2.5px" style="font-family: sans-serif ; font-weight: normal; font-style: normal; fill: rgb(0,255,0)" text-anchor="middle" transform="matrix( 1.000 0.000 0.000 1.000 88.775 58.500 )">3.35</text>
+  <text dominant-baseline="hanging" font-size="2.5px" style="font-family: sans-serif ; font-weight: normal; font-style: normal; fill: rgb(0,255,0)" text-anchor="middle" transform="matrix( 1.000 0.000 0.000 1.000 79.400 58.500 )">3.40</text>
+  <text dominant-baseline="hanging" font-size="2.5px" style="font-family: sans-serif ; font-weight: normal; font-style: normal; fill: rgb(0,255,0)" text-anchor="middle" transform="matrix( 1.000 0.000 0.000 1.000 168.150 64.500 )">thickness gauge (drawn width, mm)</text>
+  <path d="M 71.700 70.000 H 264.600 V 45.000 H 258.600 V 57.000 H 256.200 V 45.000 H 250.200 V 57.000 H 247.750 V 45.000 H 241.750 V 57.000 H 239.250 V 45.000 H 233.250 V 57.000 H 230.700 V 45.000 H 224.700 V 57.000 H 222.100 V 45.000 H 216.100 V 57.000 H 213.450 V 45.000 H 207.450 V 57.000 H 204.750 V 45.000 H 198.750 V 57.000 H 196.000 V 45.000 H 190.000 V 57.000 H 187.200 V 45.000 H 181.200 V 57.000 H 178.350 V 45.000 H 172.350 V 57.000 H 169.450 V 45.000 H 163.450 V 57.000 H 160.500 V 45.000 H 154.500 V 57.000 H 151.500 V 45.000 H 145.500 V 57.000 H 142.450 V 45.000 H 136.450 V 57.000 H 133.350 V 45.000 H 127.350 V 57.000 H 124.200 V 45.000 H 118.200 V 57.000 H 115.000 V 45.000 H 109.000 V 57.000 H 105.750 V 45.000 H 99.750 V 57.000 H 96.450 V 45.000 H 90.450 V 57.000 H 87.100 V 45.000 H 81.100 V 57.000 H 77.700 V 45.000 H 71.700 V 70.000 Z" stroke="rgb(0,0,0)" stroke-width="0.20" />
+</g>
+</svg>

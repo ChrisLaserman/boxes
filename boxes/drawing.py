@@ -9,6 +9,7 @@ from xml.etree import ElementTree as ET
 
 from affine import Affine
 
+from boxes import machine_profile
 from boxes.Color import RGB, ColorPalette
 from boxes.extents import Extents
 
@@ -831,6 +832,11 @@ class LBRN2Surface(Surface):
         index    = ET.SubElement(cs, "index",    Value="30")        # T1 layer (ANNOTATIONS)
         name     = ET.SubElement(cs, "name",     Value="T1")        # tool layer do not support names
         priority = ET.SubElement(cs, "priority", Value="7")         # is not cut at all
+
+        for cs in svg.iter("CutSetting"):
+            index = int(cs.find("index").get("Value"))
+            for key, value in machine_profile.layer_settings(index).items():
+                ET.SubElement(cs, key, Value=str(value))
 
         for i, part in enumerate(self.parts):
             if self.dbg: print ("7", num)

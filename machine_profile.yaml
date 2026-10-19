@@ -1,0 +1,39 @@
+# Machine profile for Boss LS-1420, 70 W CO2, Ruida controller, LightBurn.
+# Cutting area per Boss spec sheet: 19.75" x 13.75" (501 x 349 mm).
+#
+# Loaded automatically by boxes (see boxes/machine_profile.py). Point the
+# BOXES_PROFILE environment variable at another file to use a different one.
+
+# Argument defaults for every generator. Command line and web form still win.
+defaults:
+  # 1/8" plywood, effective thickness. Placeholder until calibrated:
+  # cut LaserCalibration, then run scripts/calibrate.
+  thickness: 3.0
+  # Burn correction in mm (half the kerf). Placeholder until calibrated.
+  burn: 0.1
+  format: lbrn2
+
+# LightBurn layer settings written into .lbrn2 files, keyed by layer index.
+# speed in mm/s, power in percent. These are starting points only: confirm
+# them with a LightBurn material test on your plywood before relying on them.
+layers:
+  0:  # Outer Cut (black)
+    speed: 20
+    maxPower: 65
+    minPower: 20
+    numPasses: 1
+  1:  # Inner Cut (blue)
+    speed: 20
+    maxPower: 65
+    minPower: 20
+    numPasses: 1
+  3:  # Etch (green), labels and markings
+    speed: 150
+    maxPower: 18
+    minPower: 10
+    numPasses: 1
+  6:  # Deep Etch (cyan)
+    speed: 80
+    maxPower: 30
+    minPower: 15
+    numPasses: 1
